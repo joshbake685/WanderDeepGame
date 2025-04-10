@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GameMap } from './World/GameMap.js';
 import { FirstPersonController } from './FirstPersonController.js';
 
+const USE_CAMERA_ORBIT = false;
 
 // Create Scene
 const scene = new THREE.Scene();

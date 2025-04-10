@@ -11,7 +11,7 @@ export class FirstPersonController {
         // Set initial values for camera
         this.camera.position.y = 3;
         this.camera.position.z = 0;
-        this.camera.lookAt(0, 0, 0);
+        this.camera.lookAt(1, 3, 0);
 
         // Add a click listener to lock the pointer
         this.document.body.addEventListener('click', () => {
