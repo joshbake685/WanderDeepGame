@@ -5,7 +5,7 @@ import { OrbitCameraController } from './CameraController/OrbitCameraController.
 import { DebugBlock } from '../DebugBlock.js';
 
 const USE_CAMERA_ORBIT = false; // For debugging
-const ENABLE_ROOF = true;
+const ENABLE_ROOF = !USE_CAMERA_ORBIT;
 
 // Create Scene
 const scene = new THREE.Scene();

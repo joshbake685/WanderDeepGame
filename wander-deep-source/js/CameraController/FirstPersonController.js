@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import { BaseCameraController } from './BaseCameraController';
 import { MathUtil } from '../Util/MathUtil';
+import { HierarchicalState } from '../Behaviour/State';
 
 export class FirstPersonController extends BaseCameraController {
     constructor(document, renderer) {
@@ -28,6 +29,13 @@ export class FirstPersonController extends BaseCameraController {
             left: false,
             right: false
         };
+        this.state = new IdleState(this);
+        this.state.setSubstate(new WalkState());
+        this.state.enterState(this);
+        this.run = false;
+        this.maxStamina = 1000;
+        this.lowStamina = 250;
+        this.stamina = this.maxStamina;
 
         this.velocity = new THREE.Vector3();
         this.direction = new THREE.Vector3();
@@ -39,6 +47,10 @@ export class FirstPersonController extends BaseCameraController {
                 case 'KeyS': this.move.backward = true; break;
                 case 'KeyA': this.move.left = true; break;
                 case 'KeyD': this.move.right = true; break;
+                case 'ShiftLeft':
+                case 'ShiftRight':
+                    this.run = true;
+                    break;
             }
         });
 
@@ -48,6 +60,10 @@ export class FirstPersonController extends BaseCameraController {
                 case 'KeyS': this.move.backward = false; break;
                 case 'KeyA': this.move.left = false; break;
                 case 'KeyD': this.move.right = false; break;
+                case 'ShiftLeft':
+                case 'ShiftRight':
+                    this.run = false;
+                    break;
             }
         });
 
@@ -67,6 +83,7 @@ export class FirstPersonController extends BaseCameraController {
     }
 
     update(delta) {
+        this.state.updateState(this);
         this.velocity.set(0, 0, 0);
 
         this.direction.z = Number(this.move.forward) - Number(this.move.backward);
@@ -82,6 +99,121 @@ export class FirstPersonController extends BaseCameraController {
 
             this.checkCollisions();
         }
+    }
+
+}
+
+
+// Walk state
+export class WalkState extends HierarchicalState {
+
+    enterState(playerController) {
+        playerController.speed = 5;
+        //console.log("Walking");
+
+        // enter substates
+        super.enterState(playerController);
+    }
+
+    updateState(playerController) {
+        if (playerController.run) {
+            // Switch state to run state
+            this.switchState(playerController, new RunState());
+        }
+        playerController.stamina = MathUtil.clamp(playerController.stamina + 1, 0, playerController.maxStamina);
+        super.updateState(playerController);
+    }
+}
+
+// Run state
+export class RunState extends HierarchicalState {
+
+    enterState(playerController) {
+        playerController.speed = 10;
+        //console.log("Running");
+
+        // enter substates
+        super.enterState(playerController);
+    }
+
+    updateState(playerController) {
+        if (!playerController.run && playerController.stamina > 0) {
+            // Switch state to walk state
+            this.switchState(playerController, new WalkState());
+        }
+        else if (playerController.stamina <= 0) {
+            // Switch state to slow state
+            this.switchState(playerController, new SlowState());
+        }
+        playerController.stamina = MathUtil.clamp(playerController.stamina - 1, 0, playerController.maxStamina);
+        super.updateState(playerController);
+    }
+}
+
+// Idle state
+export class IdleState extends HierarchicalState {
+
+    enterState(playerController) {
+        //console.log("At rest");
+
+        // enter substates
+        super.enterState(playerController);
+    }
+
+    updateState(playerController) {
+        if (playerController.move.forward || playerController.move.backward || playerController.move.left || playerController.move.right) {
+            // Switch state to rest state
+            this.switchState(playerController, new MovingState());
+        }
+        playerController.stamina = MathUtil.clamp(playerController.stamina + 2, 0, playerController.maxStamina);
+        super.updateState(playerController);
+    }
+
+}
+
+// Moving state
+export class MovingState extends HierarchicalState {
+
+    enterState(playerController) {
+        //console.log("At rest");
+
+        // enter substates
+        super.enterState(playerController);
+    }
+
+    updateState(playerController) {
+        if (!playerController.move.forward && !playerController.move.backward && !playerController.move.left && !playerController.move.right) {
+            // Switch state to rest state
+            this.switchState(playerController, new IdleState());
+        }
+        super.updateState(playerController);
+    }
+
+}
+
+// Slow state
+export class SlowState extends HierarchicalState {
+
+    enterState(playerController) {
+        playerController.speed = 2;
+        //console.log("Slow");
+
+        // enter substates
+        super.enterState(playerController);
+    }
+
+    updateState(playerController) {
+        if (playerController.stamina >= playerController.lowStamina) {
+            if (playerController.run) {
+                // Switch state to run state
+                this.switchState(playerController, new RunState());
+            } else {
+                // Switch state to walk state
+                this.switchState(playerController, new WalkState());
+            }
+        }
+        playerController.stamina = MathUtil.clamp(playerController.stamina + 1, 0, playerController.maxStamina);
+        super.updateState(playerController);
     }
 
 }
