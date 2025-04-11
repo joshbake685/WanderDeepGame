@@ -4,7 +4,8 @@ import { FirstPersonController } from './CameraController/FirstPersonController.
 import { OrbitCameraController } from './CameraController/OrbitCameraController.js';
 import { DebugBlock } from '../DebugBlock.js';
 
-const USE_CAMERA_ORBIT = true; // For debugging
+const USE_CAMERA_ORBIT = false; // For debugging
+const ENABLE_ROOF = true;
 
 // Create Scene
 const scene = new THREE.Scene();
@@ -44,6 +45,15 @@ function init() {
   gameMap = new GameMap();
   scene.add(gameMap.gameObject);
 
+  // Create roof
+  if (ENABLE_ROOF) {
+    const roofGeometry = new THREE.BoxGeometry(gameMap.bounds.max.x - gameMap.bounds.min.x, 1, gameMap.bounds.max.z - gameMap.bounds.min.z);
+    const roofMaterial = new THREE.MeshBasicMaterial({ color: 0x333333 });
+    const roofMesh = new THREE.Mesh(roofGeometry, roofMaterial);
+    roofMesh.position.set(0, 5.5, 0);
+    scene.add(roofMesh);
+  }
+
   // Update colliders with wall colliders
   colliders = gameMap.dungeonGenerator.colliders;
 
@@ -78,13 +88,13 @@ function init() {
       100,
       1);
     scene.add(monsterSpawnDebugBlock.mesh);
-  
 
-  // Add debug blocks from dungeonGenerator
-  for (let block of gameMap.dungeonGenerator.debugBlocks) {
-    scene.add(block.mesh);
+
+    // Add debug blocks from dungeonGenerator
+    for (let block of gameMap.dungeonGenerator.debugBlocks) {
+      scene.add(block.mesh);
+    }
   }
-}
 
   // Add cameraController logic to scene
   scene.add(cameraController.camera);
