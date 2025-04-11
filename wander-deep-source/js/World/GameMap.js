@@ -8,11 +8,11 @@ export class GameMap {
 
   // Constructor for our GameMap class
   constructor() {
-  
+
     // Initialize bounds in here!
     this.bounds = new THREE.Box3(
-      new THREE.Vector3(-150,0,-100), // scene min
-      new THREE.Vector3(150,0,100) // scene max
+      new THREE.Vector3(-200, 0, -200), // scene min
+      new THREE.Vector3(200, 0, 200) // scene max
     );
 
     // worldSize is a Vector3 with 
@@ -22,10 +22,10 @@ export class GameMap {
 
     // Let's define a tile size
     // for our tile-based map
-    this.tileSize = 5;
+    this.tileSize = 4;
     // Columns and rows of our tile world
-    let cols = this.worldSize.x/this.tileSize;
-    let rows = this.worldSize.z/this.tileSize;
+    let cols = this.worldSize.x / this.tileSize;
+    let rows = this.worldSize.z / this.tileSize;
 
 
     // Create our graph!
@@ -33,10 +33,9 @@ export class GameMap {
 
 
     // Put our dungeon generator here!
-    let dungeonGenerator = new DungeonGenerator(this.mapGraph, 6, this);
-    dungeonGenerator.generate();
-    this.dungeonWallColliders = dungeonGenerator.colliders;
-    
+    this.dungeonGenerator = new DungeonGenerator(this.mapGraph, 6, this);
+    this.dungeonGenerator.generate();
+
 
     // Create our map renderer
     this.mapRenderer = new MapRenderer(this);
@@ -51,20 +50,20 @@ export class GameMap {
 
   // Method to get from node to world location
   localize(node) {
-    let x = this.bounds.min.x + (node.i * this.tileSize) + this.tileSize/2;
+    let x = this.bounds.min.x + (node.i * this.tileSize) + this.tileSize / 2;
     let y = this.tileSize;
-    let z = this.bounds.min.z + (node.j * this.tileSize) + this.tileSize/2;
+    let z = this.bounds.min.z + (node.j * this.tileSize) + this.tileSize / 2;
     return new THREE.Vector3(x, y, z);
   }
 
   // Method to get from world location to node
   quantize(location) {
-    let nodeI = Math.floor((location.x - this.bounds.min.x)/this.tileSize);
-    let nodeJ = Math.floor((location.z - this.bounds.min.z)/this.tileSize);
+    let nodeI = Math.floor((location.x - this.bounds.min.x) / this.tileSize);
+    let nodeJ = Math.floor((location.z - this.bounds.min.z) / this.tileSize);
 
     return this.mapGraph.getAt(nodeI, nodeJ);
   }
 
-  
+
 
 }
