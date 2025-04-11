@@ -1,20 +1,24 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GameMap } from './World/GameMap.js';
-import { FirstPersonController } from './FirstPersonController.js';
+import { FirstPersonController } from './CameraController/FirstPersonController.js';
+import { OrbitCameraController } from './CameraController/OrbitCameraController.js';
 
+const USE_CAMERA_ORBIT = false; // For debugging
 
 // Create Scene
 const scene = new THREE.Scene();
-//const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer();
-const firstPersonController = new FirstPersonController(document, renderer);
+let cameraController = null;
+let colliders = [];
+if (USE_CAMERA_ORBIT) {
+  cameraController = new OrbitCameraController(document, renderer);
+} else {
+  cameraController = new FirstPersonController(document, renderer);
+}
+
 
 // Create clock
 const clock = new THREE.Clock();
-
-//const controls = new PointerLockControls(camera, renderer.domElement);
-//const controls = new OrbitControls(camera, renderer.domElement);
 
 
 // Declare our GameMap
@@ -27,21 +31,9 @@ function init() {
 
   scene.background = new THREE.Color(0xffffff);
 
-  // Camera
-  // camera.position.y = 180;
-  // camera.position.z = 50;
-  // camera.lookAt(0, 0, 0);
-  // scene.add(camera);
-
-  // FPS controls
-  // Add a click listener to lock the pointer
-  // document.body.addEventListener('click', () => {
-  //   controls.lock();
-  // });
-
   // Add it to your scene logic
-  scene.add(firstPersonController.camera);
-  scene.add(firstPersonController.controls.object);
+  scene.add(cameraController.camera);
+  scene.add(cameraController.controls.object);
 
   // Renderer
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -58,6 +50,10 @@ function init() {
 
   // Create our gameMap
   gameMap = new GameMap();
+  colliders = gameMap.dungeonWallColliders;
+  if (!USE_CAMERA_ORBIT) {
+    cameraController.colliders = colliders;
+  }
   scene.add(gameMap.gameObject);
 
 
@@ -74,10 +70,8 @@ function init() {
 // animate loop
 function animate() {
   requestAnimationFrame(animate);
-  firstPersonController.update(clock.getDelta());
-  renderer.render(scene, firstPersonController.camera);
-
-
+  cameraController.update(clock.getDelta());
+  renderer.render(scene, cameraController.camera);
 }
 
 

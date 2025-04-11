@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+import { VectorUtil } from '../Util/VectorUtil.js';
 import { MapNode } from './MapNode.js';
 import { MapGraph } from './MapGraph.js';
 
@@ -5,21 +7,25 @@ import { MathUtil } from '../Util/MathUtil.js'
 import { Rect } from '../Util/Rect.js';
 
 import { Partition } from './Partition.js';
+import { BoxCollider } from '../BoxCollider.js';
 
 
 // Dungeon Generator class
 export class DungeonGenerator {
 
   // Dungeon generator constructor
-  constructor(graph, minRoomSize) {
+  constructor(graph, minRoomSize, gameMap) {
     this.graph = graph;
     this.minRoomSize = minRoomSize;
+    this.gameMap = gameMap;
+    this.colliders = [];
     // This looks decent
     this.minPartitionSize = Math.ceil(minRoomSize * 1.2);
   }
 
   // Main generate method
   generate() {
+
     let root = new Partition(0, 0, this.graph.cols, this.graph.rows);
     root.split(this.minPartitionSize);
 
@@ -36,9 +42,11 @@ export class DungeonGenerator {
       this.carveCorridor(con.from, con.to);
     }
 
-    // Lastly, connect up our graph
+    // Connect up our graph
     this.graph.createEdges();
 
+    // Lastly, create wall colliders
+    this.createWallColliders();
   }
 
   // Create rooms
@@ -158,6 +166,18 @@ export class DungeonGenerator {
     for (let y = start; y <= end; y++) {
       let node = this.graph.getAt(x, y);
       node.type = MapNode.Type.Ground;
+    }
+  }
+
+  createWallColliders() {
+
+    for (let node of this.graph.nodes) {
+      if (node.type === MapNode.Type.Obstacle) {
+
+        // Add collider to list
+        let boxCollider = new BoxCollider(this.gameMap.localize(node), this.gameMap.tileSize, this.gameMap.tileSize);
+        this.colliders.push(boxCollider);
+      }
     }
   }
 }

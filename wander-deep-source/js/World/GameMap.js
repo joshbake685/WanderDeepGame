@@ -33,8 +33,9 @@ export class GameMap {
 
 
     // Put our dungeon generator here!
-    let dungeonGenerator = new DungeonGenerator(this.mapGraph, 6);
+    let dungeonGenerator = new DungeonGenerator(this.mapGraph, 6, this);
     dungeonGenerator.generate();
+    this.dungeonWallColliders = dungeonGenerator.colliders;
     
 
     // Create our map renderer
