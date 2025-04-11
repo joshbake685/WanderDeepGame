@@ -1,12 +1,16 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+import { BaseCameraController } from './BaseCameraController';
+import { MathUtil } from '../Util/MathUtil';
 
-export class FirstPersonController {
+export class FirstPersonController extends BaseCameraController {
     constructor(document, renderer) {
-        this.document = document;
-        this.renderer = renderer;
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        super(document, renderer);
         this.controls = new PointerLockControls(this.camera, renderer.domElement);
+
+        // Collision data
+        this.colliders = [];
+        this.colliderRadius = 1;
 
         // Set initial values for camera
         this.camera.position.y = 3;
@@ -49,6 +53,19 @@ export class FirstPersonController {
 
     }
 
+    setColliders(colliders) {
+        this.colliders = colliders;
+    }
+
+    checkCollisions() {
+        for (let collider of this.colliders) {
+            if (MathUtil.checkPlayerCollision(this.camera.position, this.colliderRadius, collider)) {
+                const overlapVector = MathUtil.getCollisionOverlap(this.camera.position, this.colliderRadius, collider);
+                this.camera.position.add(new THREE.Vector3(overlapVector.x, 0, overlapVector.y));
+            }
+        }
+    }
+
     update(delta) {
         this.velocity.set(0, 0, 0);
 
@@ -62,6 +79,9 @@ export class FirstPersonController {
                 this.controls.moveRight(this.velocity.x);
                 this.controls.moveForward(this.velocity.z);
             }
+
+            this.checkCollisions();
         }
     }
+
 }
