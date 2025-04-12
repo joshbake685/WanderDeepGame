@@ -8,9 +8,9 @@ import { DummyPlayer } from './Behaviour/DummyPlayer.js';
 import { Key } from './World/Key.js';
 import { Exit } from './World/Exit.js';
 
-const USE_CAMERA_ORBIT = true; // For debugging
-const ENABLE_ROOF = false;
-const SHOW_BEACONS = true;
+const USE_CAMERA_ORBIT = false; // For debugging
+const ENABLE_ROOF = true;
+const SHOW_BEACONS = false;
 
 // Create Scene
 const scene = new THREE.Scene();
@@ -35,7 +35,7 @@ let gameMap;
 // Setup our scene
 function init() {
 
-  scene.background = new THREE.Color(0xffffff);
+  scene.background = new THREE.Color(0x000000);
 
   // Renderer
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -45,7 +45,7 @@ function init() {
   let brightness = 0.1;
   if (USE_CAMERA_ORBIT) {
     brightness = 1;
-  
+
     // Directional Light
     let directionalLight = new THREE.DirectionalLight(0xffffff, brightness);
     directionalLight.position.set(0, 5, 5);
@@ -130,13 +130,8 @@ function init() {
   scene.add(monster.gameObject);
 
   // Spawn key and exit
-  if (!USE_CAMERA_ORBIT) {
-    key = new Key(gameMap.dungeonGenerator.keySpawn, cameraController, gameMap);
-    exit = new Exit(gameMap.dungeonGenerator.exitSpawn, cameraController, gameMap);
-
-    scene.add(key.mesh);
-    scene.add(exit.mesh);
-  }
+  key = new Key(gameMap.dungeonGenerator.keySpawn, cameraController, gameMap, scene);
+  exit = new Exit(gameMap.dungeonGenerator.exitSpawn, cameraController, gameMap, scene);
 
   // Add cameraController logic to scene
   scene.add(cameraController.camera);

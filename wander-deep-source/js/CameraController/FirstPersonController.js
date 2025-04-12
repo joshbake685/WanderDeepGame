@@ -47,7 +47,7 @@ export class FirstPersonController extends BaseCameraController {
         this.hasKey = false;
 
         // Flashlight
-        this.spotLight = new THREE.SpotLight(0xffffff, 1, 1000, Math.PI / 4, 1);
+        this.spotLight = new THREE.SpotLight(0xffffff, 3, 1000, Math.PI / 4, 1);
         // Parameters: color, intensity, distance, angle, penumbra
 
         this.spotLight.castShadow = true;
