@@ -9,8 +9,8 @@ import { Key } from './World/Key.js';
 import { Exit } from './World/Exit.js';
 
 const USE_CAMERA_ORBIT = false; // For debugging
-const ENABLE_ROOF = false;
-const SHOW_BEACONS = true;
+const ENABLE_ROOF = true;
+const SHOW_BEACONS = false;
 
 // Create Scene
 const scene = new THREE.Scene();
@@ -35,19 +35,25 @@ let gameMap;
 // Setup our scene
 function init() {
 
-  scene.background = new THREE.Color(0xffffff);
+  scene.background = new THREE.Color(0x000000);
 
   // Renderer
   renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.physicallyCorrectLights = true;
   document.body.appendChild(renderer.domElement);
 
-  // Directional Light
-  let directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-  directionalLight.position.set(0, 5, 5);
-  scene.add(directionalLight);
+  let brightness = 0.1;
+  if (USE_CAMERA_ORBIT) {
+    brightness = 1;
+
+    // Directional Light
+    let directionalLight = new THREE.DirectionalLight(0xffffff, brightness);
+    directionalLight.position.set(0, 5, 5);
+    scene.add(directionalLight);
+  }
 
   // Ambient Light
-  let ambient = new THREE.AmbientLight(0xffffff, 2);
+  let ambient = new THREE.AmbientLight(0x000000, brightness);
   scene.add(ambient);
 
   // Create our gameMap
@@ -57,7 +63,7 @@ function init() {
   // Create roof
   if (ENABLE_ROOF) {
     const roofGeometry = new THREE.BoxGeometry(gameMap.bounds.max.x - gameMap.bounds.min.x, 1, gameMap.bounds.max.z - gameMap.bounds.min.z);
-    const roofMaterial = new THREE.MeshBasicMaterial({ color: 0x333333 });
+    const roofMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
     const roofMesh = new THREE.Mesh(roofGeometry, roofMaterial);
     roofMesh.position.set(0, 5.5, 0);
     scene.add(roofMesh);
@@ -71,6 +77,9 @@ function init() {
     cameraController.colliders = colliders;
     cameraController.camera.position.x = gameMap.dungeonGenerator.playerSpawn.x;
     cameraController.camera.position.z = gameMap.dungeonGenerator.playerSpawn.z;
+
+    scene.add(cameraController.spotLightTarget);
+    scene.add(cameraController.spotLight);
   } else {
     cameraController = new OrbitCameraController(document, renderer);
   }
@@ -121,13 +130,8 @@ function init() {
   scene.add(monster.gameObject);
 
   // Spawn key and exit
-  if (!USE_CAMERA_ORBIT) {
-    key = new Key(gameMap.dungeonGenerator.keySpawn, cameraController, gameMap);
-    exit = new Exit(gameMap.dungeonGenerator.exitSpawn, cameraController, gameMap);
-
-    scene.add(key.mesh);
-    scene.add(exit.mesh);
-  }
+  key = new Key(gameMap.dungeonGenerator.keySpawn, cameraController, gameMap, scene);
+  exit = new Exit(gameMap.dungeonGenerator.exitSpawn, cameraController, gameMap, scene);
 
   // Add cameraController logic to scene
   scene.add(cameraController.camera);

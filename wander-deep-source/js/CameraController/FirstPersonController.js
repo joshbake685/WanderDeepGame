@@ -46,6 +46,27 @@ export class FirstPersonController extends BaseCameraController {
 
         this.hasKey = false;
 
+        // Flashlight
+        this.spotLight = new THREE.SpotLight(0xffffff, 3, 1000, Math.PI / 4, 1);
+        // Parameters: color, intensity, distance, angle, penumbra
+
+        this.spotLight.castShadow = true;
+        this.spotLight.shadow.mapSize.width = 1024;
+        this.spotLight.shadow.mapSize.height = 1024;
+        this.spotLight.shadow.camera.near = 0.1;
+        this.spotLight.shadow.camera.far = 1000;
+        this.spotLight.decay = 1;
+
+        this.spotLight.position.set(0, 0, 0); // relative to camera
+
+        // Add spotlight to camera so it moves with player
+        this.camera.add(this.spotLight);
+
+        // Add target and update its position every frame to match the camera direction
+        this.spotLightTarget = new THREE.Object3D();
+        this.camera.add(this.spotLightTarget);
+        this.spotLight.target = this.spotLightTarget;
+
         this.document.addEventListener('keydown', (event) => {
             switch (event.code) {
                 case 'KeyW': this.move.forward = true; break;
@@ -89,6 +110,17 @@ export class FirstPersonController extends BaseCameraController {
 
     update(delta) {
         this.state.updateState(this);
+
+        // Update flashlight position and direction
+        this.spotLight.position.copy(this.camera.position);
+
+        // Get direction the camera is facing
+        const dir = new THREE.Vector3();
+        this.camera.getWorldDirection(dir);
+
+        // Move the target a bit ahead in that direction
+        this.spotLightTarget.position.copy(this.camera.position).add(dir.multiplyScalar(10));
+
         this.velocity.set(0, 0, 0);
 
         this.direction.z = Number(this.move.forward) - Number(this.move.backward);
