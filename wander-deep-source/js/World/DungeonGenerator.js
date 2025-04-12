@@ -181,17 +181,22 @@ export class DungeonGenerator {
     return rooms;
   }
 
+  // Returns equivalent node of room's coordinates on mapGraph
+  roomCoordsToNode(room) {
+    return this.graph.getAt(room.x + Math.round(room.w / 2), room.y + Math.round(room.h / 2));
+  }
+
   // Returns center of provided room in world coordinates
   roomCoordsToWorld(room) {
-    return this.gameMap.localize(this.graph.getAt(room.x + Math.round(room.w / 2), room.y + Math.round(room.h / 2)));
+    return this.gameMap.localize(this.roomCoordsToNode(room));
   }
 
   // Returns roomNode index corresponding to provided room (Rect)
   roomToNodeIndex(room) {
     let roomNodeIndex = -1;
-    console.log(this.roomNodes[0].i, room.x, this.roomNodes[0].j, room.y);
+    let roomNodeConversion = this.roomCoordsToNode(room);
     for (let i = 0; i < this.roomNodes.length; i++) {
-      if (this.roomNodes[i].i === room.x && this.roomNodes[i].j === room.y) {
+      if (this.roomNodes[i].i === roomNodeConversion.i && this.roomNodes[i].j === roomNodeConversion.j) {
         roomNodeIndex = i;
         break;
       }
@@ -212,7 +217,8 @@ export class DungeonGenerator {
 
     // Create root roomNode
     const rootRoom = rooms[0];
-    const rootNode = new MapNode(this.roomNodes.length, rootRoom.x, rootRoom.y, MapNode.Type.Ground);
+    const rootNodeConversion = this.roomCoordsToNode(rootRoom);
+    const rootNode = new MapNode(this.roomNodes.length, rootNodeConversion.i, rootNodeConversion.j);
     this.roomNodes.push(rootNode);
     this.roomToNode.set(rootRoom, rootNode);
 
@@ -236,7 +242,8 @@ export class DungeonGenerator {
       }
 
       // Create MapNode for the new room
-      const toNode = new MapNode(this.roomNodes.length, to.x, to.y, MapNode.Type.Ground);
+      const toNodeConversion = this.roomCoordsToNode(to);
+      const toNode = new MapNode(this.roomNodes.length, toNodeConversion.i, toNodeConversion.j, MapNode.Type.Ground);
       this.roomNodes.push(toNode);
       this.roomToNode.set(to, toNode);
 
