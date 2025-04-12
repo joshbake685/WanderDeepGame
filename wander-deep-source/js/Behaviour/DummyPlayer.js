@@ -17,7 +17,7 @@ export class DummyPlayer {
         let monsterNode = this.gameMap.quantize(this.monster.location);
         let playerNode = this.gameMap.quantize(this.camera.position);
         if (playerNode.id === monsterNode.id) {
-            const randomIndex = MathUtil.getRandomInt(0, this.gameMap.dungeonGenerator.leafRooms.length - 1);
+            const randomIndex = MathUtil.getRandomInt(0, this.gameMap.dungeonGenerator.leafRooms.length);
             let newRoom = this.gameMap.dungeonGenerator.leafRooms[randomIndex];
             //console.log("leafRooms:", this.gameMap.dungeonGenerator.leafRooms);
             let newPosition = this.gameMap.dungeonGenerator.roomCoordsToWorld(newRoom);

@@ -302,10 +302,10 @@ export class WanderState extends State {
             let currentNode = monster.gameMap.quantize(monster.location);
             if (monster.wanderPath.length() === 0 || currentNode === monster.gameMap.quantize(monster.wanderPath.get(monster.wanderPath.length() - 1))) {
                 // console.log("Node reached. Changing course!");
-                let newTargetNodeIndex = MathUtil.getRandomInt(0, monster.gameMap.mapGraph.nodes.length - 1);
+                let newTargetNodeIndex = MathUtil.getRandomInt(0, monster.gameMap.mapGraph.nodes.length);
                 let newTargetNode = monster.gameMap.mapGraph.nodes[newTargetNodeIndex];
                 while (newTargetNode.type === MapNode.Type.Obstacle) {
-                    newTargetNodeIndex = MathUtil.getRandomInt(0, monster.gameMap.mapGraph.nodes.length - 1);
+                    newTargetNodeIndex = MathUtil.getRandomInt(0, monster.gameMap.mapGraph.nodes.length);
                     newTargetNode = monster.gameMap.mapGraph.nodes[newTargetNodeIndex];
                 }
                 let points = monster.jps.find(currentNode, newTargetNode);

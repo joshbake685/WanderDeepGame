@@ -44,6 +44,8 @@ export class FirstPersonController extends BaseCameraController {
         this.slowSpeed = 2.0;
         this.speed = this.walkSpeed; // Movement speed
 
+        this.hasKey = false;
+
         this.document.addEventListener('keydown', (event) => {
             switch (event.code) {
                 case 'KeyW': this.move.forward = true; break;

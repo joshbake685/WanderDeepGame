@@ -108,7 +108,7 @@ export class DungeonGenerator {
     let usedLocationsIndices = [];
 
     // Pick player start position
-    const playerSpawnIndex = MathUtil.getRandomInt(0, this.leafRooms.length - 1);
+    const playerSpawnIndex = MathUtil.getRandomInt(0, this.leafRooms.length);
     usedLocationsIndices.push(playerSpawnIndex);
     this.playerSpawn = this.roomCoordsToWorld(this.leafRooms[playerSpawnIndex]);
 
@@ -119,6 +119,14 @@ export class DungeonGenerator {
 
     // Pick exit spawn location
     let exitSpawnNode = this.reverseDijkstraRoom(keySpawnRoom);
+    let playerSpawnNode = this.gameMap.quantize(this.playerSpawn);
+    console.log(playerSpawnNode);
+    console.log(exitSpawnNode);
+    if (exitSpawnNode.i === playerSpawnNode.i && exitSpawnNode.j === playerSpawnNode.j) {
+      // Pick random edge to put exit room next to user spawn room
+      let edgeIndex = MathUtil.getRandomInt(0, exitSpawnNode.edges.length);
+      exitSpawnNode = exitSpawnNode.edges[edgeIndex].node;
+    }
     this.exitSpawn = this.gameMap.localize(exitSpawnNode);
 
     // Pick monster spawn location (somewhere close to or with key)
@@ -129,7 +137,7 @@ export class DungeonGenerator {
       // Pick edge to traverse (without backtracking)
       let edgeIndex;
       do {
-        edgeIndex = MathUtil.getRandomInt(0, monsterSpawnRoomNode.edges.length - 1);
+        edgeIndex = MathUtil.getRandomInt(0, monsterSpawnRoomNode.edges.length);
       } while (monsterSpawnRoomNode.edges[edgeIndex].node === lastRoomNode);
       lastRoomNode = monsterSpawnRoomNode;
       monsterSpawnRoomNode = monsterSpawnRoomNode.edges[edgeIndex].node;
@@ -183,7 +191,7 @@ export class DungeonGenerator {
 
   // Returns equivalent node of room's coordinates on mapGraph
   roomCoordsToNode(room) {
-    return this.graph.getAt(room.x + Math.round(room.w / 2), room.y + Math.round(room.h / 2));
+    return this.graph.getAt(room.x + Math.floor(room.w / 2), room.y + Math.floor(room.h / 2));
   }
 
   // Returns center of provided room in world coordinates
