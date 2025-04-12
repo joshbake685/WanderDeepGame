@@ -33,7 +33,7 @@ export class FirstPersonController extends BaseCameraController {
         this.state.setSubstate(new WalkState());
         this.state.enterState(this);
         this.run = false;
-        this.maxStamina = 1000;
+        this.maxStamina = 1000000;
         this.lowStamina = 250;
         this.stamina = this.maxStamina;
 

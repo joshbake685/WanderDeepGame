@@ -11,16 +11,13 @@ export class Character {
 
   constructor(color) {
 
-    this.size = 3;
+    this.size = 5;
 
     // Creating a cone game object for our Character
     let coneGeo = new THREE.ConeGeometry(this.size/2, this.size, 10);
     let coneMat = new THREE.MeshStandardMaterial({color: color});
     let mesh = new THREE.Mesh(coneGeo, coneMat);
-    mesh.castShadow = true;
-
     mesh.rotation.x = Math.PI/2;
-    mesh.position.y = this.size/2;
        
     this.gameObject = new THREE.Group();
     this.gameObject.add(mesh);
@@ -28,46 +25,44 @@ export class Character {
     this.location = new THREE.Vector3(0,0,0);
     this.velocity = new THREE.Vector3(0,0,0);
     this.acceleration = new THREE.Vector3(0,0,0);
-    this.topSpeed = 20;
+    this.topSpeed = 12;
 
     this.mass = 1;
-    this.maxForce = 15;
+    this.maxForce = 25;
 
   }
 
-
-
+  // Set the colour of our character
+  setColor(color) {
+    this.gameObject.children[0].material = new THREE.MeshStandardMaterial({color:color});
+    
+  }
+  
   // To update our character
-  update(deltaTime, bounds) {
-
-    // NEW HFSM
-    this.gravity();
+  update(deltaTime, gameMap) {
 
     // Update acceleration via velocity
     this.velocity.addScaledVector(this.acceleration, deltaTime);
     if (this.velocity.length() > this.topSpeed) {
       this.velocity.setLength(this.topSpeed);
     }
-    // Update velocity via location
-    this.location.addScaledVector(this.velocity, deltaTime);
     
     // Point in the direction of movement
-    // we only want to rotate when the length of our x z velocity is != 0
-    // Otherwise, we keep it at the most recent frame
-    let velocityXZ = new THREE.Vector3(this.velocity.x, 0, this.velocity.z);
-    if (velocityXZ.length() > 0) {
+    if (this.velocity.length() > 0.1) {
       let angle = Math.atan2(this.velocity.x, this.velocity.z);
       this.gameObject.rotation.y = angle;
     }
-
-    this.checkBounds(bounds);
-
+    
+    // Update velocity via location
+    this.location.addScaledVector(this.velocity, deltaTime);
+    
+    //this.checkBounds(bounds);
+    this.checkEdges(gameMap);
 
     this.gameObject.position.copy(this.location);
     this.acceleration.setLength(0);
 
   }
-
 
   // Wrap around the scene
   checkBounds(bounds) {
@@ -83,6 +78,54 @@ export class Character {
 
   }
 
+  // Check the edges to ensure our character 
+  // is within a traversable node
+  checkEdges(gameMap) {
+    let node = gameMap.quantize(this.location);
+    let nodeLocation = gameMap.localize(node);
+
+    let smoothFactor = 0.2;
+
+    // Checking the west edge or left edge
+    if (!node.hasEdgeTo(node.i - 1, node.j)) {
+      let nodeEdge = nodeLocation.x - gameMap.tileSize/2;
+      let characterEdge = this.location.x - this.size/2;
+      if (characterEdge < nodeEdge) {
+        this.location.x += (nodeEdge - characterEdge) * smoothFactor;
+      }
+    }
+
+    // Check the east edge or right edge
+    if (!node.hasEdgeTo(node.i + 1, node.j)) {
+      let nodeEdge = nodeLocation.x + gameMap.tileSize/2;
+      let characterEdge = this.location.x + this.size/2;
+      if (characterEdge > nodeEdge) {
+        this.location.x += (nodeEdge - characterEdge) * smoothFactor;
+      }
+    }
+
+    // Check top edge
+    if (!node.hasEdgeTo(node.i, node.j - 1)) {
+      let nodeEdge = nodeLocation.z - gameMap.tileSize/2;
+      let characterEdge = this.location.z - this.size/2;
+      if (characterEdge < nodeEdge) {
+        this.location.z += (nodeEdge - characterEdge) * smoothFactor;
+      }
+    }
+
+    // Check bottom edge
+    if (!node.hasEdgeTo(node.i, node.j + 1)) {
+      let nodeEdge = nodeLocation.z + gameMap.tileSize/2;
+      let characterEdge = this.location.z + this.size/2;
+      if (characterEdge > nodeEdge) {
+        this.location.z += (nodeEdge - characterEdge) * smoothFactor;
+      }
+    }
+  }
+
+
+
+
 
   // Apply force to our character
   applyForce(force) {
@@ -90,31 +133,23 @@ export class Character {
     this.acceleration.add(force);
   }
 
-  // If you just want to stop
+  // Stop our character
   stop() {
-    this.velocity.x = 0;
-    this.velocity.z = 0;
+    this.velocity.set(0, 0, 0);
   }
 
-  // Apply brakes steering behaviour  
+  // Apply brakes method to slow down to a stop
   applyBrakes() {
-    let velocityXZ = new THREE.Vector3(this.velocity.x, 0, this.velocity.z);
-    let brake = VectorUtil.multiplyScalar(velocityXZ, -1);
-    if (brake.length() > this.maxForce) {
-      brake.setLength(this.maxForce);
-    }
-    return brake;
-  }
 
-  // Gravity
-  gravity() {
-    if (this.location.y <= 0) { 
-      this.velocity.y = 0; 
-      this.location.y = 0;
-    } else {
-      this.applyForce(new THREE.Vector3(0,-10,0));
-    }
-  }
+    let desired = new THREE.Vector3();
+    let steer = VectorUtil.sub(desired, this.velocity);
 
+    if (steer.length() > this.maxForce) {
+      steer.setLength(this.maxForce);
+    }
+    return steer;
+
+  }
+  
 
 }
