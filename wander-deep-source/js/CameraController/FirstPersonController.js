@@ -39,7 +39,10 @@ export class FirstPersonController extends BaseCameraController {
 
         this.velocity = new THREE.Vector3();
         this.direction = new THREE.Vector3();
-        this.speed = 5.0; // Movement speed
+        this.walkSpeed = 5.0;
+        this.runSpeed = 10.0;
+        this.slowSpeed = 2.0;
+        this.speed = this.walkSpeed; // Movement speed
 
         this.document.addEventListener('keydown', (event) => {
             switch (event.code) {
@@ -108,7 +111,7 @@ export class FirstPersonController extends BaseCameraController {
 export class WalkState extends HierarchicalState {
 
     enterState(playerController) {
-        playerController.speed = 5;
+        playerController.speed = playerController.walkSpeed;
         //console.log("Walking");
 
         // enter substates
@@ -129,7 +132,7 @@ export class WalkState extends HierarchicalState {
 export class RunState extends HierarchicalState {
 
     enterState(playerController) {
-        playerController.speed = 10;
+        playerController.speed = playerController.runSpeed;
         //console.log("Running");
 
         // enter substates
@@ -195,7 +198,7 @@ export class MovingState extends HierarchicalState {
 export class SlowState extends HierarchicalState {
 
     enterState(playerController) {
-        playerController.speed = 2;
+        playerController.speed = playerController.slowSpeed;
         //console.log("Slow");
 
         // enter substates
