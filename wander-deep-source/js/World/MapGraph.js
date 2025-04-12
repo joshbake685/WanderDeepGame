@@ -98,7 +98,7 @@ export class MapGraph {
     let groundNodes = this.nodes.filter(node => node.type === MapNode.Type.Ground);
 
     if (groundNodes.length === 0) {
-      console.log("No ground nodes available.");
+      //console.log("No ground nodes available.");
       return null;
     }
     // Random index from the list of ground nodes
@@ -155,7 +155,7 @@ export class MapGraph {
     let current = end;
 
     if (!parents.has(end.id)) {
-      console.log("There is no path to the node: " + end.id);
+      //console.log("There is no path to the node: " + end.id);
       return path;
     }
 

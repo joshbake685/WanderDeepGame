@@ -3,12 +3,15 @@ import { VectorUtil } from '../Util/VectorUtil.js';
 import { MathUtil } from '../Util/MathUtil.js';
 import { JPS } from '../World/JPS.js';
 import { Path } from '../World/Path.js';
+import { State } from './State.js';
+import { MapNode } from '../World/MapNode.js';
 
 export class Monster {
 
-    constructor(gameMap) {
+    constructor(gameMap, playerController) {
         this.gameMap = gameMap;
-        this.size = 5;
+        this.playerController = playerController;
+        this.size = 3;
 
         // Creating a cone game object for our Character
         let coneGeo = new THREE.ConeGeometry(this.size / 2, this.size, 10);
@@ -22,7 +25,10 @@ export class Monster {
         this.location = new THREE.Vector3(0, 0, 0);
         this.velocity = new THREE.Vector3(0, 0, 0);
         this.acceleration = new THREE.Vector3(0, 0, 0);
-        this.topSpeed = 12;
+        this.wanderTopSpeed = 4;
+        this.pursueTopSpeed = 6;
+        this.seekTopSpeed = 8;
+        this.topSpeed = this.wanderTopSpeed;
 
         this.mass = 0.1;
         this.maxForce = 25;
@@ -30,6 +36,19 @@ export class Monster {
         this.pathPoint = 0;
         this.wanderPath = new Path(3);
         this.jps = new JPS(this.gameMap.mapGraph);
+        this.pursueRange = 50;
+        this.maxPursueTimer = 5;
+        this.pursueTimer = this.maxPursueTimer;
+        this.fov = 5 * Math.PI / 12;
+
+        this.state = new WanderState();
+        this.state.enterState(this, this.playerController);
+    }
+
+    // Switch monster's state
+    switchState(state, player) {
+        this.state = state;
+        this.state.enterState(this, player);
     }
 
     // Set the colour of our character
@@ -39,21 +58,9 @@ export class Monster {
 
     // To update our character
     update(deltaTime, gameMap) {
-
-        // Follow wander path found by JPS
-        let currentNode = this.gameMap.quantize(this.location);
-        if (this.wanderPath.length() === 0 || currentNode === this.gameMap.quantize(this.wanderPath.get(this.wanderPath.length() - 1))) {
-            console.log("Node reached. Changing course!");
-            let newTargetNodeIndex = MathUtil.getRandomInt(0, this.gameMap.mapGraph.nodes.length - 1);
-            let newTargetNode = this.gameMap.mapGraph.nodes[newTargetNodeIndex];
-            let points = this.jps.find(currentNode, newTargetNode);
-            this.pathPoint = 0;
-            this.wanderPath.points = [];
-            points.forEach(point => {
-                this.wanderPath.points.push(this.gameMap.localize(point));
-            });
-        }
-        this.applyForce(this.simpleFollow(this.wanderPath));
+        // console.log(this.location.distanceTo(this.playerController.camera.position));
+        // console.log(this.pursueTimer);
+        this.state.updateState(deltaTime, this, this.playerController);
 
         // Update acceleration via velocity
         this.velocity.addScaledVector(this.acceleration, deltaTime);
@@ -137,8 +144,33 @@ export class Monster {
         }
     }
 
+    // Returns true if player is in monster's line of sight
+    lineOfSight() {
+        const toPlayer = this.playerController.camera.position.clone().sub(this.location).normalize();
 
+        // Monster's facing direction (forward = -Z in Three.js)
+        this.forward = new THREE.Vector3(0, 0, 1);
+        this.forward.applyEuler(new THREE.Euler(0, this.gameObject.rotation.y, 0));
 
+        const angle = toPlayer.angleTo(this.forward);
+
+        if (angle < this.fov) {
+            const distance = this.location.distanceTo(this.playerController.camera.position);
+            const steps = Math.floor(distance);
+
+            for (let i = 0; i < steps; i++) {
+                const stepPoint = this.location.clone().add(toPlayer.clone().multiplyScalar(i));
+                const node = this.gameMap.quantize(stepPoint);
+                if (node.type === MapNode.Type.Obstacle) {
+                    return false;
+                }
+            }
+
+            return true; // No obstacles and within FOV
+        }
+
+        return false;
+    }
 
 
     // Apply force to our character
@@ -248,4 +280,92 @@ export class Monster {
     }
 
 
+}
+
+
+export class WanderState extends State {
+    enterState(monster, player) {
+        monster.topSpeed = monster.wanderTopSpeed;
+        // console.log("Wandering");
+    }
+
+    updateState(deltaTime, monster, player) {
+        // console.log("Wandering");
+        if (player && monster.lineOfSight()) {
+            // Switch our state to pursue state
+            monster.switchState(new SeekState(), player);
+        } else if (player && monster.location.distanceTo(player.camera.position) <= monster.pursueRange && player.velocity >= player.runSpeed) {
+            // Switch our state to pursue state
+            monster.switchState(new PursueState(), player);
+        } else {
+            // Follow wander path found by JPS
+            let currentNode = monster.gameMap.quantize(monster.location);
+            if (monster.wanderPath.length() === 0 || currentNode === monster.gameMap.quantize(monster.wanderPath.get(monster.wanderPath.length() - 1))) {
+                // console.log("Node reached. Changing course!");
+                let newTargetNodeIndex = MathUtil.getRandomInt(0, monster.gameMap.mapGraph.nodes.length - 1);
+                let newTargetNode = monster.gameMap.mapGraph.nodes[newTargetNodeIndex];
+                while (newTargetNode.type === MapNode.Type.Obstacle) {
+                    newTargetNodeIndex = MathUtil.getRandomInt(0, monster.gameMap.mapGraph.nodes.length - 1);
+                    newTargetNode = monster.gameMap.mapGraph.nodes[newTargetNodeIndex];
+                }
+                let points = monster.jps.find(currentNode, newTargetNode);
+                monster.pathPoint = 0;
+                monster.wanderPath.points = [];
+                points.forEach(point => {
+                    monster.wanderPath.points.push(monster.gameMap.localize(point));
+                });
+            }
+            monster.applyForce(monster.simpleFollow(monster.wanderPath));
+        }
+    }
+}
+
+export class PursueState extends State {
+    enterState(monster, player) {
+        monster.topSpeed = monster.pursueTopSpeed;
+        // console.log("Pursuing");
+    }
+
+    updateState(deltaTime, monster, player) {
+        // console.log("Pursuing");
+        if (monster.lineOfSight()) {
+            // Switch our state to seek (chase) state
+            monster.pursueTimer = monster.maxPursueTimer;
+            monster.switchState(new SeekState(), player);
+        } else if (monster.pursueTimer <= 0 && monster.location.distanceTo(player.camera.position) > monster.pursueRange) {
+            // Switch our state to wander state
+            monster.pursueTimer = monster.maxPursueTimer;
+            monster.switchState(new WanderState(), player);
+        } else {
+            // Decrement timer
+            monster.pursueTimer -= deltaTime;
+
+            // Follow pursue path found by JPS
+            let currentNode = monster.gameMap.quantize(monster.location);
+            let points = monster.jps.find(currentNode, monster.gameMap.quantize(player.camera.position));
+            //console.log(player.camera.position);
+            if (points.length > 1) {
+                let nextPoint = monster.gameMap.localize(points[1]);
+                monster.applyForce(monster.seek(nextPoint));
+            }
+        }
+    }
+}
+
+export class SeekState extends State {
+    enterState(monster, player) {
+        monster.topSpeed = monster.seekTopSpeed;
+        // console.log("Seeking");
+    }
+
+    updateState(deltaTime, monster, player) {
+        // console.log("Seeking");
+        if (!monster.lineOfSight()) {
+            // Switch our state to pursue state
+            monster.switchState(new PursueState(), player);
+        } else {
+            const seekTo = new THREE.Vector3(player.camera.position.x, monster.location.y, player.camera.position.z);
+            monster.applyForce(monster.seek(seekTo));
+        }
+    }
 }

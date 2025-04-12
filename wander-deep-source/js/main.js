@@ -4,8 +4,9 @@ import { FirstPersonController } from './CameraController/FirstPersonController.
 import { OrbitCameraController } from './CameraController/OrbitCameraController.js';
 import { DebugBlock } from '../DebugBlock.js';
 import { Monster } from './Behaviour/Monster.js';
+import { DummyPlayer } from './Behaviour/DummyPlayer.js';
 
-const USE_CAMERA_ORBIT = false; // For debugging
+const USE_CAMERA_ORBIT = true; // For debugging
 const ENABLE_ROOF = false;
 const SHOW_BEACONS = true;
 
@@ -13,6 +14,7 @@ const SHOW_BEACONS = true;
 const scene = new THREE.Scene();
 const renderer = new THREE.WebGLRenderer();
 let cameraController = null;
+let dummyPlayer = null;
 let monster = null;
 let colliders = [];
 
@@ -102,7 +104,15 @@ function init() {
   }
 
   // Spawn monster
-  monster = new Monster(gameMap);
+  if (!USE_CAMERA_ORBIT) {
+    monster = new Monster(gameMap, cameraController);
+  } else {
+    // Add dummy player if in orbit mode
+    dummyPlayer = new DummyPlayer(gameMap.dungeonGenerator.playerSpawn, null, gameMap);
+    monster = new Monster(gameMap, dummyPlayer);
+    dummyPlayer.monster = monster;
+    scene.add(dummyPlayer.debugBlock.mesh);
+  }
   monster.location = gameMap.dungeonGenerator.monsterSpawn.sub(new THREE.Vector3(0,2,0));
   scene.add(monster.gameObject);
 
@@ -126,6 +136,9 @@ function animate() {
   requestAnimationFrame(animate);
   let delta = clock.getDelta();
   cameraController.update(delta);
+  if (dummyPlayer && USE_CAMERA_ORBIT) {
+    dummyPlayer.update();
+  }
   monster.update(delta, gameMap);
   renderer.render(scene, cameraController.camera);
 }

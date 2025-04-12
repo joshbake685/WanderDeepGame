@@ -136,7 +136,7 @@ export class DungeonGenerator {
     }
     this.monsterSpawn = this.gameMap.localize(monsterSpawnRoomNode);
 
-    console.log("this.keySpawn:", this.keySpawn, "this.exitSpawn:", this.exitSpawn);
+    //console.log("this.keySpawn:", this.keySpawn, "this.exitSpawn:", this.exitSpawn);
 
     // Iterate over all of the connections
     // Creating a corridor between them
@@ -206,7 +206,7 @@ export class DungeonGenerator {
       throw Error("roomToNodeIndex conversion failed.");
     }
 
-    console.log("roomNodeIndex", roomNodeIndex);
+    //console.log("roomNodeIndex", roomNodeIndex);
     return roomNodeIndex;
   }
 
