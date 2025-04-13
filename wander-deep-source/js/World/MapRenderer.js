@@ -20,52 +20,76 @@ export class MapRenderer {
   // To create the actual game object
   // associated with our GameMap
   createRendering() {
+    // Use provided materials
     let groundMaterial = this.groundMaterial;
-    let obstacleMaterial = new THREE.MeshStandardMaterial({ color: this.obstacleColor, flatShading: true });
-  
+    let obstacleMaterial = this.wallMaterial;
+
     // Group nodes by type
     let nodes = this.gameMap.mapGraph.nodes;
     let groundNodes = nodes.filter(n => n.type === MapNode.Type.Ground);
     let obstacleNodes = nodes.filter(n => n.type === MapNode.Type.Obstacle);
-  
+
     // Create shared box geometry
     let tileGeometry = new THREE.BoxGeometry(
       this.gameMap.tileSize,
       this.gameMap.tileSize,
       this.gameMap.tileSize
     );
-  
-    // Merge geometries
-    let mergedGeometries = [];
+
     let half = this.gameMap.tileSize / 2;
     let minX = this.gameMap.bounds.min.x;
     let minZ = this.gameMap.bounds.min.z;
-  
+
+    // === Ground geometry merging ===
+    let groundGeometries = [];
+
     for (let i = 0; i < groundNodes.length; i++) {
       let node = groundNodes[i];
       let x = minX + node.i * this.gameMap.tileSize + half;
       let y = 0;
       let z = minZ + node.j * this.gameMap.tileSize + half;
-  
+
       let tile = tileGeometry.clone();
       tile.applyMatrix4(new THREE.Matrix4().makeTranslation(x, y, z));
-      mergedGeometries.push(tile);
+      groundGeometries.push(tile);
     }
-  
-    let mergedGroundGeometry = mergeGeometries(mergedGeometries);
+
+    let mergedGroundGeometry = mergeGeometries(groundGeometries);
     let groundMesh = new THREE.Mesh(mergedGroundGeometry, groundMaterial);
     groundMesh.position.sub(new THREE.Vector3(0, 2.5, 0));
     groundMesh.receiveShadow = true;
-  
-    // Instanced mesh for obstacles (unchanged)
-    let obstacleMesh = new THREE.InstancedMesh(tileGeometry, obstacleMaterial, obstacleNodes.length);
-    this.setMeshTransforms(obstacleMesh, obstacleNodes);
-  
+
+    // === Obstacle geometry merging ===
+    let obstacleGeometries = [];
+
+    for (let i = 0; i < obstacleNodes.length; i++) {
+      let node = obstacleNodes[i];
+      let elevation = 2;
+
+      let x = minX + node.i * this.gameMap.tileSize + half;
+      let y = elevation / 2;
+      let z = minZ + node.j * this.gameMap.tileSize + half;
+
+      let tile = tileGeometry.clone();
+      tile.applyMatrix4(new THREE.Matrix4()
+        .makeTranslation(x, y, z)
+        .multiply(new THREE.Matrix4().makeScale(1, elevation, 1))
+      );
+
+      obstacleGeometries.push(tile);
+    }
+
+    let mergedObstacleGeometry = mergeGeometries(obstacleGeometries);
+    let obstacleMesh = new THREE.Mesh(mergedObstacleGeometry, obstacleMaterial);
+    obstacleMesh.castShadow = true;
+    obstacleMesh.receiveShadow = true;
+
     // Group everything
     let gameObject = new THREE.Group();
     gameObject.add(groundMesh, obstacleMesh);
     return gameObject;
   }
+
 
   // Set mesh transforms
   setMeshTransforms(mesh, nodeList) {

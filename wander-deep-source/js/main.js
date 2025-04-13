@@ -22,6 +22,7 @@ let key = null;
 let exit = null;
 let groundMaterial = null;
 let wallMaterial = null;
+let ceilingMaterial = null;
 let colliders = [];
 
 
@@ -37,8 +38,8 @@ let gameMap;
 async function loadTextures() {
   const textureLoader = new THREE.TextureLoader();
 
-  // Load textures asynchronously
-  const diffuseMapPromise = new Promise((resolve, reject) => {
+  // Floor textures
+  const floorDiffuseMapPromise = new Promise((resolve, reject) => {
     textureLoader.load(
       '../../textures/floor_bricks_02_4k.gltf/textures/floor_bricks_02_diff_4k.jpg',
       resolve,
@@ -46,8 +47,7 @@ async function loadTextures() {
       reject
     );
   });
-
-  const normalMapPromise = new Promise((resolve, reject) => {
+  const floorNormalMapPromise = new Promise((resolve, reject) => {
     textureLoader.load(
       '../../textures/floor_bricks_02_4k.gltf/textures/floor_bricks_02_nor_gl_4k.jpg',
       resolve,
@@ -55,8 +55,7 @@ async function loadTextures() {
       reject
     );
   });
-
-  const roughnessMapPromise = new Promise((resolve, reject) => {
+  const floorRoughnessMapPromise = new Promise((resolve, reject) => {
     textureLoader.load(
       '../../textures/floor_bricks_02_4k.gltf/textures/floor_bricks_02_rough_4k.jpg',
       resolve,
@@ -65,23 +64,84 @@ async function loadTextures() {
     );
   });
 
-  return Promise.all([diffuseMapPromise, normalMapPromise, roughnessMapPromise])
-    .then(([diffuseMap, normalMap, roughnessMap]) => {
+  // Wall textures
+  const wallDiffuseMapPromise = new Promise((resolve, reject) => {
+    textureLoader.load(
+      '../../textures/castle_wall_varriation_4k.gltf/textures/castle_wall_varriation_diff_4k.jpg',
+      resolve,
+      undefined,
+      reject
+    );
+  });
+  const wallNormalMapPromise = new Promise((resolve, reject) => {
+    textureLoader.load(
+      '../../textures/castle_wall_varriation_4k.gltf/textures/castle_wall_varriation_nor_gl_4k.jpg',
+      resolve,
+      undefined,
+      reject
+    );
+  });
+  const wallRoughnessMapPromise = new Promise((resolve, reject) => {
+    textureLoader.load(
+      '../../textures/castle_wall_varriation_4k.gltf/textures/castle_wall_varriation_rough_4k.jpg',
+      resolve,
+      undefined,
+      reject
+    );
+  });
+
+  // Ceiling textures
+  const ceilingDiffuseMapPromise = new Promise((resolve, reject) => {
+    textureLoader.load(
+      '../../textures/cracked_concrete_wall_4k.gltf/textures/cracked_concrete_wall_diff_4k.jpg',
+      resolve,
+      undefined,
+      reject
+    );
+  });
+  const ceilingNormalMapPromise = new Promise((resolve, reject) => {
+    textureLoader.load(
+      '../../textures/cracked_concrete_wall_4k.gltf/textures/cracked_concrete_wall_nor_gl_4k.jpg',
+      resolve,
+      undefined,
+      reject
+    );
+  });
+  const ceilingRoughnessMapPromise = new Promise((resolve, reject) => {
+    textureLoader.load(
+      '../../textures/cracked_concrete_wall_4k.gltf/textures/cracked_concrete_wall_rough_4k.jpg',
+      resolve,
+      undefined,
+      reject
+    );
+  });
+
+  return Promise.all([floorDiffuseMapPromise, floorNormalMapPromise, floorRoughnessMapPromise, wallDiffuseMapPromise, wallNormalMapPromise, wallRoughnessMapPromise, ceilingDiffuseMapPromise, ceilingNormalMapPromise, ceilingRoughnessMapPromise])
+    .then(([floorDiffuseMap, floorNormalMap, floorRoughnessMap, wallDiffuseMap, wallNormalMap, wallRoughnessMap, ceilingDiffuseMap, ceilingNormalMap, ceilingRoughnessMap]) => {
       groundMaterial = new THREE.MeshStandardMaterial({
         color: 0xffffff,
-        map: diffuseMap,
-        normalMap: normalMap,
-        roughnessMap: roughnessMap,
+        map: floorDiffuseMap,
+        normalMap: floorNormalMap,
+        roughnessMap: floorRoughnessMap,
         roughness: 1,
         flatShading: false
       });
 
-      // wallMaterial = new THREE.MeshStandardMaterial({
-      //   map: diffuseMap,
-      //   normalMap: normalMap,
-      //   roughnessMap: roughnessMap,
-      //   roughness: 1, // fallback value
-      // });
+      wallMaterial = new THREE.MeshStandardMaterial({
+        map: wallDiffuseMap,
+        normalMap: wallNormalMap,
+        roughnessMap: wallRoughnessMap,
+        roughness: 1,
+        flatShading: false
+      });
+
+      ceilingMaterial = new THREE.MeshStandardMaterial({
+        map: ceilingDiffuseMap,
+        normalMap: ceilingNormalMap,
+        roughnessMap: ceilingRoughnessMap,
+        roughness: 1,
+        flatShading: false
+      });
     }).catch ((err) => {
       console.error("Error loading textures: ", err);
     });
@@ -109,10 +169,6 @@ function init() {
     scene.add(directionalLight);
   }
 
-  // Ambient Light
-  // let ambient = new THREE.AmbientLight(0x000000, brightness);
-  // scene.add(ambient);
-
   // Create our gameMap
   gameMap = new GameMap(groundMaterial, wallMaterial);
   scene.add(gameMap.gameObject);
@@ -120,8 +176,8 @@ function init() {
   // Create roof
   if (ENABLE_ROOF) {
     const roofGeometry = new THREE.BoxGeometry(gameMap.bounds.max.x - gameMap.bounds.min.x, 1, gameMap.bounds.max.z - gameMap.bounds.min.z);
-    const roofMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
-    const roofMesh = new THREE.Mesh(roofGeometry, roofMaterial);
+    //const roofMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
+    const roofMesh = new THREE.Mesh(roofGeometry, ceilingMaterial);
     roofMesh.position.set(0, 5.5, 0);
     scene.add(roofMesh);
   }
