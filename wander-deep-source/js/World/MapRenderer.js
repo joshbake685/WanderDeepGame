@@ -40,7 +40,13 @@ export class MapRenderer {
     let minX = this.gameMap.bounds.min.x;
     let minZ = this.gameMap.bounds.min.z;
 
-    // === Ground geometry merging ===
+    /**
+     * The ground geometries need to be merged so that lighting works on it
+     * (spotlights do not work on instanced meshes for some reason)
+     * The same must be done for the obstacle geometries as well
+     */
+
+    // *** Ground geometry creation and merging ***
     let groundGeometries = [];
 
     for (let i = 0; i < groundNodes.length; i++) {
@@ -59,7 +65,7 @@ export class MapRenderer {
     groundMesh.position.sub(new THREE.Vector3(0, 2.5, 0));
     groundMesh.receiveShadow = true;
 
-    // === Obstacle geometry merging ===
+    // *** Obstacle geometry creation and merging ***
     let obstacleGeometries = [];
 
     for (let i = 0; i < obstacleNodes.length; i++) {
@@ -89,37 +95,5 @@ export class MapRenderer {
     gameObject.add(groundMesh, obstacleMesh);
     return gameObject;
   }
-
-
-  // Set mesh transforms
-  setMeshTransforms(mesh, nodeList) {
-    let half = this.gameMap.tileSize / 2;
-    let minX = this.gameMap.bounds.min.x;
-    let minZ = this.gameMap.bounds.min.z;
-    let tileSize = this.gameMap.tileSize;
-
-    // Iterate over nodes
-    for (let i = 0; i < nodeList.length; i++) {
-      let node = nodeList[i];
-
-      let elevation = 0;
-      if (node.type === MapNode.Type.Obstacle) {
-        elevation = 2;
-      }
-
-      // Get translation
-      let x = minX + node.i * tileSize + half;
-      let y = elevation / 2;
-      let z = minZ + node.j * tileSize + half;
-
-      // Create matrix to translate and scale
-      let translation = new THREE.Matrix4().makeTranslation(x, y, z);
-      let scale = new THREE.Matrix4().makeScale(1, elevation, 1);
-      let matrix = translation.multiply(scale);
-
-      mesh.setMatrixAt(i, matrix);
-    }
-  }
-
 }
 

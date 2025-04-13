@@ -48,7 +48,6 @@ export class FirstPersonController extends BaseCameraController {
 
         // Flashlight
         this.spotLight = new THREE.SpotLight(0xffffff, 3, 1000, Math.PI / 4, 1);
-        // Parameters: color, intensity, distance, angle, penumbra
 
         this.spotLight.castShadow = true;
         this.spotLight.shadow.mapSize.width = 1024;
@@ -322,7 +321,6 @@ export class IdleState extends HierarchicalState {
 export class MovingState extends HierarchicalState {
 
     enterState(playerController) {
-        //console.log("At rest");
 
         // enter substates
         super.enterState(playerController);
@@ -345,9 +343,8 @@ export class SlowState extends HierarchicalState {
 
     enterState(playerController) {
         playerController.speed = playerController.slowSpeed;
-        //console.log("Slow");
         playerController.playerWalkSound?.play();
-        playerController.playerBreathingSound?.play();
+        if (!playerController.playerBreathingSound?.isPlaying) playerController.playerBreathingSound?.play();
 
         // enter substates
         super.enterState(playerController);

@@ -121,7 +121,7 @@ export class Exit {
                     this.playerController.gameOver = true;
                     this.playerController.controls.unlock();
                     if (!this.playedOpeningDoorSound) {
-                        this.playedLockedSound = true;
+                        this.playedOpeningDoorSound = true;
                         this.playerController.openingDoorSound?.play();
                     }
                     setTimeout(() => {

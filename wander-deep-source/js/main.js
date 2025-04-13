@@ -30,9 +30,6 @@ let ceilingMaterial = null;
 // Models
 let monsterModel = null;
 
-// Audio
-let dungeonAmbience = null;
-
 let colliders = [];
 
 
@@ -44,7 +41,7 @@ const clock = new THREE.Clock();
 let gameMap;
 
 
-// Load textures
+// Returns promise that resolves once all textures are loaded
 async function loadTextures() {
   const textureLoader = new THREE.TextureLoader();
 
@@ -157,6 +154,7 @@ async function loadTextures() {
     });
 }
 
+// Returns promise that resolves once all models are loaded
 async function loadModels() {
   const loader = new GLTFLoader();
 

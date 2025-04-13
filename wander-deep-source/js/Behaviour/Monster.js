@@ -40,10 +40,67 @@ export class Monster {
         this.pathPoint = 0;
         this.wanderPath = new Path(3);
         this.jps = new JPS(this.gameMap.mapGraph);
-        this.pursueRange = 25;
-        this.maxPursueTimer = 3;
+        this.pursueRange = 35;
+        this.maxPursueTimer = 5;
         this.pursueTimer = this.maxPursueTimer;
         this.fov = 5 * Math.PI / 12;
+
+        // Monster audio setup
+        this.walkSound = new THREE.PositionalAudio(this.playerController.listener);
+        this.growlCloseSound = new THREE.PositionalAudio(this.playerController.listener);
+        this.growlDistantSound = new THREE.PositionalAudio(this.playerController.listener);
+        this.roarSound = new THREE.PositionalAudio(this.playerController.listener);
+
+        const audioLoader = new THREE.AudioLoader();
+
+        audioLoader.load('../../audio/monster-walk.mp3', (buffer) => {
+            this.walkSound.setBuffer(buffer);
+            this.walkSound.setRefDistance(1);
+            this.walkSound.setLoop(true);
+            this.walkSound.setVolume(1.5);
+            this.walkSound.setDistanceModel('inverse');
+            this.walkSound.setRolloffFactor(1);
+            this.walkSound.setPlaybackRate(0.6);
+            this.walkSound.setMaxDistance(this.pursueRange);
+            this.model.add(this.walkSound);
+            this.walkSound.play();
+        });
+
+        audioLoader.load('../../audio/monster-growl-close.mp3', (buffer) => {
+            this.growlCloseSound.setBuffer(buffer);
+            this.growlCloseSound.setRefDistance(this.pursueRange / 2);
+            this.growlCloseSound.setLoop(false);
+            this.growlCloseSound.setVolume(1.5);
+            this.growlCloseSound.setDistanceModel('inverse');
+            this.growlCloseSound.setRolloffFactor(1);
+            this.growlCloseSound.setMaxDistance(this.pursueRange);
+            this.model.add(this.growlCloseSound);
+            this.growlCloseSound.stop();
+        });
+
+        audioLoader.load('../../audio/monster-growl-distant.mp3', (buffer) => {
+            this.growlDistantSound.setBuffer(buffer);
+            this.growlDistantSound.setRefDistance(this.pursueRange / 2);
+            this.growlDistantSound.setLoop(false);
+            this.growlDistantSound.setVolume(1.5);
+            this.growlDistantSound.setDistanceModel('inverse');
+            this.growlDistantSound.setRolloffFactor(1);
+            this.growlDistantSound.setMaxDistance(this.pursueRange);
+            this.model.add(this.growlDistantSound);
+            this.growlDistantSound.stop();
+        });
+
+        audioLoader.load('../../audio/monster-roar.mp3', (buffer) => {
+            this.roarSound.setBuffer(buffer);
+            this.roarSound.setRefDistance(this.pursueRange / 2);
+            this.roarSound.setLoop(false);
+            this.roarSound.setVolume(1.5);
+            this.roarSound.setDistanceModel('inverse');
+            this.roarSound.setRolloffFactor(1);
+            this.roarSound.setMaxDistance(this.pursueRange);
+            this.model.add(this.roarSound);
+            this.roarSound.stop();
+        });
 
         this.playedDeathSound = false;
 
@@ -66,6 +123,7 @@ export class Monster {
             this.playerController.gameOver = true;
             if (!this.playedDeathSound) {
                 this.playedDeathSound = true;
+                this.walkSound?.stop();
                 this.playerController.deathSound?.play();
             }
             this.playerController.controls.unlock();
@@ -76,6 +134,7 @@ export class Monster {
         if (this.playerController.gameOver && !this.stopped) {
             this.stopped = true;
             this.topSpeed = 0;
+            this.walkSound?.stop();
             this.mixer.clipAction(this.model.animations[0]).fadeOut(3);
         }
 
@@ -168,7 +227,7 @@ export class Monster {
     lineOfSight() {
         const toPlayer = this.playerController.camera.position.clone().sub(this.location).normalize();
 
-        // Monster's facing direction (forward = -Z in Three.js)
+        // Monster's facing direction
         this.forward = new THREE.Vector3(0, 0, 1);
         this.forward.applyEuler(new THREE.Euler(0, this.model.rotation.y, 0));
 
@@ -235,40 +294,40 @@ export class Monster {
     }
 
     // Arrive steering behaviour
-    // arrive(target, radius) {
+    arrive(target, radius) {
 
-    //     let desired = new THREE.Vector3();
-    //     desired.subVectors(target, this.location);
+        let desired = new THREE.Vector3();
+        desired.subVectors(target, this.location);
 
-    //     let distance = desired.length();
+        let distance = desired.length();
 
-    //     // If we are close enough to
-    //     // the target, stop
-    //     if (distance < 0.1) {
-    //         this.stop();
+        // If we are close enough to
+        // the target, stop
+        if (distance < 0.1) {
+            this.stop();
 
-    //         // Slow down if we are within
-    //         // a specified radius to the target
-    //     } else if (distance < radius) {
-    //         let speed = (distance / radius) * this.topSpeed;
-    //         desired.setLength(speed);
+            // Slow down if we are within
+            // a specified radius to the target
+        } else if (distance < radius) {
+            let speed = (distance / radius) * this.topSpeed;
+            desired.setLength(speed);
 
-    //         // Otherwise, proceed as seek
-    //     } else {
-    //         desired.setLength(this.topSpeed);
+            // Otherwise, proceed as seek
+        } else {
+            desired.setLength(this.topSpeed);
 
-    //     }
+        }
 
-    //     // Apply our steering formula
-    //     let steer = new THREE.Vector3();
-    //     steer.subVectors(desired, this.velocity);
+        // Apply our steering formula
+        let steer = new THREE.Vector3();
+        steer.subVectors(desired, this.velocity);
 
-    //     if (steer.length() > this.maxForce) {
-    //         steer.setLength(this.maxForce);
-    //     }
+        if (steer.length() > this.maxForce) {
+            steer.setLength(this.maxForce);
+        }
 
-    //     return steer;
-    // }
+        return steer;
+    }
 
     // Simple path follow
     simpleFollow(path) {
@@ -311,12 +370,15 @@ export class WanderState extends State {
     }
 
     updateState(deltaTime, monster, player) {
-        //console.log("Wandering");
+        console.log("Wandering");
+        let playerIsMoving = player.move.forward || player.move.backward || player.move.left || player.move.right;
         if (player && monster.lineOfSight()) {
             // Switch our state to pursue state
             monster.switchState(new SeekState(), player);
-        } else if (player && monster.location.distanceTo(player.camera.position) <= monster.pursueRange && player.velocity >= player.runSpeed) {
+        } else if (player && monster.location.distanceTo(player.camera.position) <= monster.pursueRange && playerIsMoving && player.speed == player.runSpeed) {
             // Switch our state to pursue state
+            if (!monster.growlCloseSound?.isPlaying) monster.growlCloseSound?.play();
+            console.log("Close growl sound played");
             monster.switchState(new PursueState(), player);
         } else {
             // Follow wander path found by JPS
@@ -345,7 +407,7 @@ export class PursueState extends State {
     }
 
     updateState(deltaTime, monster, player) {
-        // console.log("Pursuing");
+        console.log("Pursuing");
         if (monster.lineOfSight()) {
             // Switch our state to seek (chase) state
             monster.pursueTimer = monster.maxPursueTimer;
@@ -353,6 +415,10 @@ export class PursueState extends State {
         } else if (monster.pursueTimer <= 0 && monster.location.distanceTo(player.camera.position) > monster.pursueRange) {
             // Switch our state to wander state
             monster.pursueTimer = monster.maxPursueTimer;
+            setTimeout(() => {
+                if (!monster.growlDistantSound?.isPlaying) monster.growlDistantSound?.play();
+              }, 2000);
+            console.log("Distant growl sound played");
             monster.switchState(new WanderState(), player);
         } else {
             // Decrement timer
@@ -373,11 +439,12 @@ export class PursueState extends State {
 export class SeekState extends State {
     enterState(monster, player) {
         monster.topSpeed = monster.seekTopSpeed;
-        // console.log("Seeking");
+        if (!monster.roarSound?.isPlaying) monster.roarSound?.play();
+        console.log("Roar sound played");
     }
 
     updateState(deltaTime, monster, player) {
-        // console.log("Seeking");
+        console.log("Seeking");
         if (!monster.lineOfSight()) {
             // Switch our state to pursue state
             monster.switchState(new PursueState(), player);
