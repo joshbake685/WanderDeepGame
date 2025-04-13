@@ -21,10 +21,18 @@ let dummyPlayer = null;
 let monster = null;
 let key = null;
 let exit = null;
+
+// Materials
 let groundMaterial = null;
 let wallMaterial = null;
 let ceilingMaterial = null;
+
+// Models
 let monsterModel = null;
+
+// Audio
+let dungeonAmbience = null;
+
 let colliders = [];
 
 
@@ -164,7 +172,6 @@ async function loadModels() {
   });
 }
 
-
 // Setup our scene
 function init() {
   scene.background = new THREE.Color(0xffffff);
@@ -300,7 +307,6 @@ loadTextures().then(() => {
   return loadModels();
 }).then((loadedModel) => {
   monsterModel = loadedModel;
-  console.log(monsterModel);
   init();
 }).catch((error) => {
   console.error("Error loading assets:", error);

@@ -33,7 +33,7 @@ export class FirstPersonController extends BaseCameraController {
         this.state.setSubstate(new WalkState());
         this.state.enterState(this);
         this.run = false;
-        this.maxStamina = 1000000;
+        this.maxStamina = 1000;
         this.lowStamina = 250;
         this.stamina = this.maxStamina;
 
@@ -69,6 +69,73 @@ export class FirstPersonController extends BaseCameraController {
 
         // Game over (for monster to stop)
         this.gameOver = false;
+
+        // For audio
+        this.listener = new THREE.AudioListener();
+        this.camera.add(this.listener);
+
+        this.dungeonAmbience = new THREE.Audio(this.listener);
+        this.playerWalkSound = new THREE.Audio(this.listener);
+        this.playerRunSound = new THREE.Audio(this.listener);
+        this.playerBreathingSound = new THREE.Audio(this.listener);
+        this.getKeySound = new THREE.Audio(this.listener);
+        this.doorLockedSound = new THREE.Audio(this.listener);
+        this.openingDoorSound = new THREE.Audio(this.listener);
+        const audioLoader = new THREE.AudioLoader();
+
+        audioLoader.load('../../audio/dark-dungeon-ambience.wav', (buffer) => {
+            console.log(this);
+            this.dungeonAmbience.setBuffer(buffer);
+            this.dungeonAmbience.setLoop(true);
+            this.dungeonAmbience.setVolume(0.5);
+            this.dungeonAmbience.play();
+        });
+
+        audioLoader.load('../../audio/player-walk.mp3', (buffer) => {
+            this.playerWalkSound.setBuffer(buffer);
+            this.playerWalkSound.setLoop(true);
+            this.playerWalkSound.setVolume(1);
+            this.playerWalkSound.stop();
+        });
+
+        audioLoader.load('../../audio/player-run.mp3', (buffer) => {
+            this.playerRunSound.setBuffer(buffer);
+            this.playerRunSound.setLoop(true);
+            this.playerRunSound.setVolume(1);
+            this.playerRunSound.stop();
+        });
+
+        audioLoader.load('../../audio/player-heavy-breathing.mp3', (buffer) => {
+            this.playerBreathingSound.setBuffer(buffer);
+            this.playerBreathingSound.setLoop(false);
+            this.playerBreathingSound.setVolume(1);
+            this.playerBreathingSound.stop();
+        });
+
+        audioLoader.load('../../audio/key-get.mp3', (buffer) => {
+            this.getKeySound.setBuffer(buffer);
+            this.getKeySound.setLoop(false);
+            this.getKeySound.setVolume(1);
+            this.getKeySound.stop();
+        });
+
+        audioLoader.load('../../audio/door-locked.mp3', (buffer) => {
+            this.doorLockedSound.setBuffer(buffer);
+            this.doorLockedSound.setLoop(false);
+            this.doorLockedSound.setVolume(1);
+            this.doorLockedSound.stop();
+        });
+
+        audioLoader.load('../../audio/opening-door.mp3', (buffer) => {
+            this.openingDoorSound.setBuffer(buffer);
+            this.openingDoorSound.setLoop(false);
+            this.openingDoorSound.setVolume(1);
+            this.openingDoorSound.stop();
+        });
+
+        document.addEventListener('pointerdown', () => {
+            THREE.AudioContext.getContext().resume();
+        });
 
         this.document.addEventListener('keydown', (event) => {
             switch (event.code) {
@@ -163,16 +230,24 @@ export class FirstPersonController extends BaseCameraController {
 export class WalkState extends HierarchicalState {
 
     enterState(playerController) {
+        let playerIsMoving = playerController.move.forward || playerController.move.backward || playerController.move.left || playerController.move.right;
         playerController.speed = playerController.walkSpeed;
-        //console.log("Walking");
+        if (!playerController.playerWalkSound?.isPlaying && playerIsMoving && !this.gameOver) {
+            playerController.playerWalkSound?.play();
+        }
 
         // enter substates
         super.enterState(playerController);
     }
 
     updateState(playerController) {
+        let playerIsMoving = playerController.move.forward || playerController.move.backward || playerController.move.left || playerController.move.right;
+        if (!playerController.playerWalkSound?.isPlaying && playerIsMoving && !this.gameOver) {
+            playerController.playerWalkSound?.play();
+        }
         if (playerController.run) {
             // Switch state to run state
+            playerController.playerWalkSound?.stop();
             this.switchState(playerController, new RunState());
         }
         playerController.stamina = MathUtil.clamp(playerController.stamina + 1, 0, playerController.maxStamina);
@@ -184,20 +259,30 @@ export class WalkState extends HierarchicalState {
 export class RunState extends HierarchicalState {
 
     enterState(playerController) {
+        let playerIsMoving = playerController.move.forward || playerController.move.backward || playerController.move.left || playerController.move.right;
         playerController.speed = playerController.runSpeed;
-        //console.log("Running");
+
+        if (!playerController.playerRunSound?.isPlaying && playerIsMoving && !this.gameOver) {
+            playerController.playerRunSound?.play();
+        }
 
         // enter substates
         super.enterState(playerController);
     }
 
     updateState(playerController) {
+        let playerIsMoving = playerController.move.forward || playerController.move.backward || playerController.move.left || playerController.move.right;
+        if (!playerController.playerRunSound?.isPlaying && playerIsMoving && !this.gameOver) {
+            playerController.playerRunSound?.play();
+        }
         if (!playerController.run && playerController.stamina > 0) {
             // Switch state to walk state
+            playerController.playerRunSound?.stop();
             this.switchState(playerController, new WalkState());
         }
         else if (playerController.stamina <= 0) {
             // Switch state to slow state
+            playerController.playerRunSound?.stop();
             this.switchState(playerController, new SlowState());
         }
         playerController.stamina = MathUtil.clamp(playerController.stamina - 1, 0, playerController.maxStamina);
@@ -209,7 +294,6 @@ export class RunState extends HierarchicalState {
 export class IdleState extends HierarchicalState {
 
     enterState(playerController) {
-        //console.log("At rest");
 
         // enter substates
         super.enterState(playerController);
@@ -239,6 +323,8 @@ export class MovingState extends HierarchicalState {
     updateState(playerController) {
         if (!playerController.move.forward && !playerController.move.backward && !playerController.move.left && !playerController.move.right) {
             // Switch state to rest state
+            playerController.playerWalkSound?.stop();
+            playerController.playerRunSound?.stop();
             this.switchState(playerController, new IdleState());
         }
         super.updateState(playerController);
@@ -252,6 +338,8 @@ export class SlowState extends HierarchicalState {
     enterState(playerController) {
         playerController.speed = playerController.slowSpeed;
         //console.log("Slow");
+        playerController.playerWalkSound?.play();
+        playerController.playerBreathingSound?.play();
 
         // enter substates
         super.enterState(playerController);
@@ -261,9 +349,11 @@ export class SlowState extends HierarchicalState {
         if (playerController.stamina >= playerController.lowStamina) {
             if (playerController.run) {
                 // Switch state to run state
+                playerController.playerWalkSound?.stop();
                 this.switchState(playerController, new RunState());
             } else {
                 // Switch state to walk state
+                playerController.playerWalkSound?.stop();
                 this.switchState(playerController, new WalkState());
             }
         }

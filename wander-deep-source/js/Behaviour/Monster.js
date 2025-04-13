@@ -29,8 +29,8 @@ export class Monster {
         this.velocity = new THREE.Vector3(0, 0, 0);
         this.acceleration = new THREE.Vector3(0, 0, 0);
         this.wanderTopSpeed = 4;
-        this.pursueTopSpeed = 6;
-        this.seekTopSpeed = 8;
+        this.pursueTopSpeed = 5;
+        this.seekTopSpeed = 6;
         this.topSpeed = this.wanderTopSpeed;
         this.stopped = false;
 
@@ -40,8 +40,8 @@ export class Monster {
         this.pathPoint = 0;
         this.wanderPath = new Path(3);
         this.jps = new JPS(this.gameMap.mapGraph);
-        this.pursueRange = 50;
-        this.maxPursueTimer = 5;
+        this.pursueRange = 25;
+        this.maxPursueTimer = 3;
         this.pursueTimer = this.maxPursueTimer;
         this.fov = 5 * Math.PI / 12;
 

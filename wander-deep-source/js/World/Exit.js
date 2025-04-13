@@ -14,7 +14,6 @@ export class Exit {
 
         // Add spotlight
         this.spotLight = new THREE.SpotLight(0xffffff, 1, 1000, Math.PI / 2, 1);
-        // Parameters: color, intensity, distance, angle, penumbra
 
         this.spotLight.castShadow = true;
         this.spotLight.shadow.mapSize.width = 1024;
@@ -26,6 +25,9 @@ export class Exit {
         this.spotLightTarget = new THREE.Object3D();
         this.spotLightTarget.position.set(this.spotLight.position.x, 0, this.spotLight.position.z);
         this.spotLight.target = this.spotLightTarget;
+
+        this.playedLockedSound = false;
+        this.playedOpeningDoorSound = false;
 
         scene.add(this.spotLightTarget);
         scene.add(this.spotLight);
@@ -116,16 +118,24 @@ export class Exit {
                 if (this.playerController.hasKey) {
                     // End game!
                     this.padlockModel.visible = false;
-
                     this.playerController.gameOver = true;
                     this.playerController.controls.unlock();
+                    if (!this.playedOpeningDoorSound) {
+                        this.playedLockedSound = true;
+                        this.playerController.openingDoorSound?.play();
+                    }
                     setTimeout(() => {
                         this.playerController.showEndScreen("You escaped!", "Play again");
-                    }, 1500);
+                    }, 3500);
                 } else {
-                    // Play lock sound, show message, etc.
-                    console.log("Player needs key!");
+                    // Play lock sound
+                    if (!this.playedLockedSound) {
+                        this.playedLockedSound = true;
+                        this.playerController.doorLockedSound?.play();
+                    }
                 }
+            } else {
+                this.playedLockedSound = false;
             }
         }
     }
