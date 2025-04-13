@@ -7,6 +7,7 @@ import { Monster } from './Behaviour/Monster.js';
 import { DummyPlayer } from './Behaviour/DummyPlayer.js';
 import { Key } from './World/Key.js';
 import { Exit } from './World/Exit.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 const USE_CAMERA_ORBIT = false; // For debugging
 const ENABLE_ROOF = true;
@@ -20,9 +21,15 @@ let dummyPlayer = null;
 let monster = null;
 let key = null;
 let exit = null;
+
+// Materials
 let groundMaterial = null;
 let wallMaterial = null;
 let ceilingMaterial = null;
+
+// Models
+let monsterModel = null;
+
 let colliders = [];
 
 
@@ -34,7 +41,7 @@ const clock = new THREE.Clock();
 let gameMap;
 
 
-// Load textures
+// Returns promise that resolves once all textures are loaded
 async function loadTextures() {
   const textureLoader = new THREE.TextureLoader();
 
@@ -142,11 +149,26 @@ async function loadTextures() {
         roughness: 1,
         flatShading: false
       });
-    }).catch ((err) => {
+    }).catch((err) => {
       console.error("Error loading textures: ", err);
     });
 }
 
+// Returns promise that resolves once all models are loaded
+async function loadModels() {
+  const loader = new GLTFLoader();
+
+  return new Promise((resolve, reject) => {
+    loader.load('../../models/monster_walking.glb', (gltf) => {
+      const monsterModel = gltf.scene;
+      const animations = gltf.animations;
+      monsterModel.animations = animations;
+      resolve(monsterModel);
+    }, undefined, (error) => {
+      reject(error);
+    });
+  });
+}
 
 // Setup our scene
 function init() {
@@ -176,7 +198,6 @@ function init() {
   // Create roof
   if (ENABLE_ROOF) {
     const roofGeometry = new THREE.BoxGeometry(gameMap.bounds.max.x - gameMap.bounds.min.x, 1, gameMap.bounds.max.z - gameMap.bounds.min.z);
-    //const roofMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
     const roofMesh = new THREE.Mesh(roofGeometry, ceilingMaterial);
     roofMesh.position.set(0, 5.5, 0);
     scene.add(roofMesh);
@@ -231,16 +252,16 @@ function init() {
 
   // Spawn monster
   if (!USE_CAMERA_ORBIT) {
-    monster = new Monster(gameMap, cameraController);
+    monster = new Monster(gameMap, cameraController, scene, monsterModel);
   } else {
     // Add dummy player if in orbit mode
     dummyPlayer = new DummyPlayer(gameMap.dungeonGenerator.playerSpawn, null, gameMap);
-    monster = new Monster(gameMap, dummyPlayer);
+    monster = new Monster(gameMap, dummyPlayer, scene, monsterModel);
     dummyPlayer.monster = monster;
     scene.add(dummyPlayer.debugBlock.mesh);
   }
-  monster.location = gameMap.dungeonGenerator.monsterSpawn.sub(new THREE.Vector3(0, 2, 0));
-  scene.add(monster.gameObject);
+  let spawnLocation = gameMap.dungeonGenerator.monsterSpawn.clone();
+  monster.location.set(spawnLocation.x, spawnLocation.y, spawnLocation.z);
 
   // Spawn key and exit
   key = new Key(gameMap.dungeonGenerator.keySpawn, cameraController, gameMap, scene);
@@ -251,10 +272,14 @@ function init() {
   scene.add(cameraController.controls.object);
 
   // First call to animate
-  animate(); 
+  animate();
 }
 
-
+// Restarts game by refreshing tab
+function restartGame() {
+  window.location.reload();
+}
+window.restartGame = restartGame;
 
 
 // animate loop
@@ -276,5 +301,10 @@ function animate() {
 
 
 loadTextures().then(() => {
+  return loadModels();
+}).then((loadedModel) => {
+  monsterModel = loadedModel;
   init();
+}).catch((error) => {
+  console.error("Error loading assets:", error);
 });

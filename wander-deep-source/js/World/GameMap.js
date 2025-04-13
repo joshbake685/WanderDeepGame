@@ -12,10 +12,6 @@ export class GameMap {
     this.wallMaterial = wallMaterial;
 
     // Initialize bounds in here!
-    // this.bounds = new THREE.Box3(
-    //   new THREE.Vector3(-200, 0, -200), // scene min
-    //   new THREE.Vector3(200, 0, 200) // scene max
-    // );
     this.bounds = new THREE.Box3(
       new THREE.Vector3(-100, 0, -100), // scene min
       new THREE.Vector3(100, 0, 100) // scene max
@@ -28,7 +24,6 @@ export class GameMap {
 
     // Let's define a tile size
     // for our tile-based map
-    //this.tileSize = 4;
     this.tileSize = 5;
     // Columns and rows of our tile world
     let cols = this.worldSize.x / this.tileSize;

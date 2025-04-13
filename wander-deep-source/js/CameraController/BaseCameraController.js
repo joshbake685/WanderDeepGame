@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 
+// Base class for orbit and first person cameras
 export class BaseCameraController {
     constructor(document, renderer) {
         this.document = document;

@@ -120,8 +120,6 @@ export class DungeonGenerator {
     // Pick exit spawn location
     let exitSpawnNode = this.reverseDijkstraRoom(keySpawnRoom);
     let playerSpawnNode = this.gameMap.quantize(this.playerSpawn);
-    console.log(playerSpawnNode);
-    console.log(exitSpawnNode);
     if (exitSpawnNode.i === playerSpawnNode.i && exitSpawnNode.j === playerSpawnNode.j) {
       // Pick random edge to put exit room next to user spawn room
       let edgeIndex = MathUtil.getRandomInt(0, exitSpawnNode.edges.length);
@@ -143,8 +141,6 @@ export class DungeonGenerator {
       monsterSpawnRoomNode = monsterSpawnRoomNode.edges[edgeIndex].node;
     }
     this.monsterSpawn = this.gameMap.localize(monsterSpawnRoomNode);
-
-    //console.log("this.keySpawn:", this.keySpawn, "this.exitSpawn:", this.exitSpawn);
 
     // Iterate over all of the connections
     // Creating a corridor between them
@@ -214,7 +210,6 @@ export class DungeonGenerator {
       throw Error("roomToNodeIndex conversion failed.");
     }
 
-    //console.log("roomNodeIndex", roomNodeIndex);
     return roomNodeIndex;
   }
 
@@ -280,7 +275,6 @@ export class DungeonGenerator {
         this.debugBlocks.push(debugBlock);
       }
     }
-    this.roomNodes.forEach((roomNode) => console.log("edges:", roomNode.edges.length));
 
     return connections;
   }

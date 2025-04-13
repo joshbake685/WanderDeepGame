@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { DebugBlock } from '../../DebugBlock';
 import { MathUtil } from '../Util/MathUtil';
 
@@ -19,12 +18,9 @@ export class DummyPlayer {
         if (playerNode.id === monsterNode.id) {
             const randomIndex = MathUtil.getRandomInt(0, this.gameMap.dungeonGenerator.leafRooms.length);
             let newRoom = this.gameMap.dungeonGenerator.leafRooms[randomIndex];
-            //console.log("leafRooms:", this.gameMap.dungeonGenerator.leafRooms);
             let newPosition = this.gameMap.dungeonGenerator.roomCoordsToWorld(newRoom);
 
             // Set position to new location
-            //console.log("NEW ROOM:", newRoom);
-            //console.log("NEW POSITION:", newPosition);
             this.camera.position.set(newPosition.x, 0, newPosition.z);
             this.debugBlock.mesh.position.set(newPosition.x, 0, newPosition.z);
         }

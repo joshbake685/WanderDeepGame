@@ -8,27 +8,31 @@ import { MapNode } from '../World/MapNode.js';
 
 export class Monster {
 
-    constructor(gameMap, playerController) {
+    constructor(gameMap, playerController, scene, monsterModel) {
         this.gameMap = gameMap;
         this.playerController = playerController;
+        this.scene = scene;
+        this.model = monsterModel;
         this.size = 3;
 
-        // Creating a cone game object for our Character
-        let coneGeo = new THREE.ConeGeometry(this.size / 2, this.size, 10);
-        let coneMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-        let mesh = new THREE.Mesh(coneGeo, coneMat);
-        mesh.rotation.x = Math.PI / 2;
+        // Create a mixer for GLB model
+        this.mixer = null;
+        this.model.scale.set(5, 5, 5);
 
-        this.gameObject = new THREE.Group();
-        this.gameObject.add(mesh);
+        // Set up and play the animation
+        this.mixer = new THREE.AnimationMixer(this.model);
+        this.mixer.clipAction(this.model.animations[0]).play();
+
+        this.scene.add(this.model);
 
         this.location = new THREE.Vector3(0, 0, 0);
         this.velocity = new THREE.Vector3(0, 0, 0);
         this.acceleration = new THREE.Vector3(0, 0, 0);
         this.wanderTopSpeed = 4;
-        this.pursueTopSpeed = 6;
-        this.seekTopSpeed = 8;
+        this.pursueTopSpeed = 5;
+        this.seekTopSpeed = 6;
         this.topSpeed = this.wanderTopSpeed;
+        this.stopped = false;
 
         this.mass = 0.1;
         this.maxForce = 25;
@@ -36,10 +40,69 @@ export class Monster {
         this.pathPoint = 0;
         this.wanderPath = new Path(3);
         this.jps = new JPS(this.gameMap.mapGraph);
-        this.pursueRange = 50;
+        this.pursueRange = 35;
         this.maxPursueTimer = 5;
         this.pursueTimer = this.maxPursueTimer;
         this.fov = 5 * Math.PI / 12;
+
+        // Monster audio setup
+        this.walkSound = new THREE.PositionalAudio(this.playerController.listener);
+        this.growlCloseSound = new THREE.PositionalAudio(this.playerController.listener);
+        this.growlDistantSound = new THREE.PositionalAudio(this.playerController.listener);
+        this.roarSound = new THREE.PositionalAudio(this.playerController.listener);
+
+        const audioLoader = new THREE.AudioLoader();
+
+        audioLoader.load('../../audio/monster-walk.mp3', (buffer) => {
+            this.walkSound.setBuffer(buffer);
+            this.walkSound.setRefDistance(1);
+            this.walkSound.setLoop(true);
+            this.walkSound.setVolume(1.5);
+            this.walkSound.setDistanceModel('inverse');
+            this.walkSound.setRolloffFactor(1);
+            this.walkSound.setPlaybackRate(0.6);
+            this.walkSound.setMaxDistance(this.pursueRange);
+            this.model.add(this.walkSound);
+            this.walkSound.play();
+        });
+
+        audioLoader.load('../../audio/monster-growl-close.mp3', (buffer) => {
+            this.growlCloseSound.setBuffer(buffer);
+            this.growlCloseSound.setRefDistance(this.pursueRange / 2);
+            this.growlCloseSound.setLoop(false);
+            this.growlCloseSound.setVolume(1.5);
+            this.growlCloseSound.setDistanceModel('inverse');
+            this.growlCloseSound.setRolloffFactor(1);
+            this.growlCloseSound.setMaxDistance(this.pursueRange);
+            this.model.add(this.growlCloseSound);
+            this.growlCloseSound.stop();
+        });
+
+        audioLoader.load('../../audio/monster-growl-distant.mp3', (buffer) => {
+            this.growlDistantSound.setBuffer(buffer);
+            this.growlDistantSound.setRefDistance(this.pursueRange / 2);
+            this.growlDistantSound.setLoop(false);
+            this.growlDistantSound.setVolume(1.5);
+            this.growlDistantSound.setDistanceModel('inverse');
+            this.growlDistantSound.setRolloffFactor(1);
+            this.growlDistantSound.setMaxDistance(this.pursueRange);
+            this.model.add(this.growlDistantSound);
+            this.growlDistantSound.stop();
+        });
+
+        audioLoader.load('../../audio/monster-roar.mp3', (buffer) => {
+            this.roarSound.setBuffer(buffer);
+            this.roarSound.setRefDistance(this.pursueRange / 2);
+            this.roarSound.setLoop(false);
+            this.roarSound.setVolume(1.5);
+            this.roarSound.setDistanceModel('inverse');
+            this.roarSound.setRolloffFactor(1);
+            this.roarSound.setMaxDistance(this.pursueRange);
+            this.model.add(this.roarSound);
+            this.roarSound.stop();
+        });
+
+        this.playedDeathSound = false;
 
         this.state = new WanderState();
         this.state.enterState(this, this.playerController);
@@ -51,16 +114,32 @@ export class Monster {
         this.state.enterState(this, player);
     }
 
-    // Set the colour of our character
-    setColor(color) {
-        this.gameObject.children[0].material = new THREE.MeshStandardMaterial({ color: color });
-    }
-
     // To update our character
     update(deltaTime, gameMap) {
-        // console.log(this.location.distanceTo(this.playerController.camera.position));
-        // console.log(this.pursueTimer);
+
+        let playerNode = this.gameMap.quantize(this.playerController.camera.position);
+        let monsterNode = this.gameMap.quantize(this.location);
+        if (playerNode.i === monsterNode.i && playerNode.j === monsterNode.j) {
+            this.playerController.gameOver = true;
+            if (!this.playedDeathSound) {
+                this.playedDeathSound = true;
+                this.walkSound?.stop();
+                this.playerController.deathSound?.play();
+            }
+            this.playerController.controls.unlock();
+            this.playerController.showEndScreen("YOU DIED", "Try again", true);
+        }
+
+        // Stop moving + animating when game is over
+        if (this.playerController.gameOver && !this.stopped) {
+            this.stopped = true;
+            this.topSpeed = 0;
+            this.walkSound?.stop();
+            this.mixer.clipAction(this.model.animations[0]).fadeOut(3);
+        }
+
         this.state.updateState(deltaTime, this, this.playerController);
+        this.mixer.update(deltaTime);
 
         // Update acceleration via velocity
         this.velocity.addScaledVector(this.acceleration, deltaTime);
@@ -71,16 +150,16 @@ export class Monster {
         // Point in the direction of movement
         if (this.velocity.length() > 0.1) {
             let angle = Math.atan2(this.velocity.x, this.velocity.z);
-            this.gameObject.rotation.y = angle;
+            this.model.rotation.y = angle;
         }
 
         // Update velocity via location
         this.location.addScaledVector(this.velocity, deltaTime);
 
-        //this.checkBounds(bounds);
         this.checkEdges(gameMap);
 
-        this.gameObject.position.copy(this.location);
+        this.model.position.copy(this.location);
+        this.model.position.setY(0);
         this.acceleration.setLength(0);
 
     }
@@ -148,9 +227,9 @@ export class Monster {
     lineOfSight() {
         const toPlayer = this.playerController.camera.position.clone().sub(this.location).normalize();
 
-        // Monster's facing direction (forward = -Z in Three.js)
+        // Monster's facing direction
         this.forward = new THREE.Vector3(0, 0, 1);
-        this.forward.applyEuler(new THREE.Euler(0, this.gameObject.rotation.y, 0));
+        this.forward.applyEuler(new THREE.Euler(0, this.model.rotation.y, 0));
 
         const angle = toPlayer.angleTo(this.forward);
 
@@ -286,28 +365,26 @@ export class Monster {
 export class WanderState extends State {
     enterState(monster, player) {
         monster.topSpeed = monster.wanderTopSpeed;
-        // console.log("Wandering");
+        monster.pathPoint = 0;
+        monster.wanderPath.points = [];
     }
 
     updateState(deltaTime, monster, player) {
-        // console.log("Wandering");
+        let playerIsMoving = player.move.forward || player.move.backward || player.move.left || player.move.right;
         if (player && monster.lineOfSight()) {
             // Switch our state to pursue state
             monster.switchState(new SeekState(), player);
-        } else if (player && monster.location.distanceTo(player.camera.position) <= monster.pursueRange && player.velocity >= player.runSpeed) {
+        } else if (player && monster.location.distanceTo(player.camera.position) <= monster.pursueRange && playerIsMoving && player.speed == player.runSpeed) {
             // Switch our state to pursue state
+            if (!monster.growlCloseSound?.isPlaying) monster.growlCloseSound?.play();
             monster.switchState(new PursueState(), player);
         } else {
             // Follow wander path found by JPS
             let currentNode = monster.gameMap.quantize(monster.location);
             if (monster.wanderPath.length() === 0 || currentNode === monster.gameMap.quantize(monster.wanderPath.get(monster.wanderPath.length() - 1))) {
-                // console.log("Node reached. Changing course!");
-                let newTargetNodeIndex = MathUtil.getRandomInt(0, monster.gameMap.mapGraph.nodes.length);
-                let newTargetNode = monster.gameMap.mapGraph.nodes[newTargetNodeIndex];
-                while (newTargetNode.type === MapNode.Type.Obstacle) {
-                    newTargetNodeIndex = MathUtil.getRandomInt(0, monster.gameMap.mapGraph.nodes.length);
-                    newTargetNode = monster.gameMap.mapGraph.nodes[newTargetNodeIndex];
-                }
+                let groundNodesFilt = monster.gameMap.mapGraph.nodes.filter((node) => { return node.type === MapNode.Type.Ground });
+                let newTargetNodeIndex = MathUtil.getRandomInt(0, groundNodesFilt.length);
+                let newTargetNode = groundNodesFilt[newTargetNodeIndex];
                 let points = monster.jps.find(currentNode, newTargetNode);
                 monster.pathPoint = 0;
                 monster.wanderPath.points = [];
@@ -323,11 +400,9 @@ export class WanderState extends State {
 export class PursueState extends State {
     enterState(monster, player) {
         monster.topSpeed = monster.pursueTopSpeed;
-        // console.log("Pursuing");
     }
 
     updateState(deltaTime, monster, player) {
-        // console.log("Pursuing");
         if (monster.lineOfSight()) {
             // Switch our state to seek (chase) state
             monster.pursueTimer = monster.maxPursueTimer;
@@ -335,6 +410,9 @@ export class PursueState extends State {
         } else if (monster.pursueTimer <= 0 && monster.location.distanceTo(player.camera.position) > monster.pursueRange) {
             // Switch our state to wander state
             monster.pursueTimer = monster.maxPursueTimer;
+            setTimeout(() => {
+                if (!monster.growlDistantSound?.isPlaying) monster.growlDistantSound?.play();
+              }, 2000);
             monster.switchState(new WanderState(), player);
         } else {
             // Decrement timer
@@ -343,7 +421,6 @@ export class PursueState extends State {
             // Follow pursue path found by JPS
             let currentNode = monster.gameMap.quantize(monster.location);
             let points = monster.jps.find(currentNode, monster.gameMap.quantize(player.camera.position));
-            //console.log(player.camera.position);
             if (points.length > 1) {
                 let nextPoint = monster.gameMap.localize(points[1]);
                 monster.applyForce(monster.seek(nextPoint));
@@ -355,11 +432,10 @@ export class PursueState extends State {
 export class SeekState extends State {
     enterState(monster, player) {
         monster.topSpeed = monster.seekTopSpeed;
-        // console.log("Seeking");
+        if (!monster.roarSound?.isPlaying) monster.roarSound?.play();
     }
 
     updateState(deltaTime, monster, player) {
-        // console.log("Seeking");
         if (!monster.lineOfSight()) {
             // Switch our state to pursue state
             monster.switchState(new PursueState(), player);

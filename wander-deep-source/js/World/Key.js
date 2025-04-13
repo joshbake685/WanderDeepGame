@@ -43,6 +43,7 @@ export class Key {
             if (keyNode.id === playerNode.id) {
                 this.playerController.hasKey = true;
                 this.model.visible = false;
+                this.playerController.getKeySound?.play();
             }
         }
     }
