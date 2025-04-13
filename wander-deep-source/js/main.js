@@ -20,6 +20,8 @@ let dummyPlayer = null;
 let monster = null;
 let key = null;
 let exit = null;
+let groundMaterial = null;
+let wallMaterial = null;
 let colliders = [];
 
 
@@ -31,15 +33,70 @@ const clock = new THREE.Clock();
 let gameMap;
 
 
+// Load textures
+async function loadTextures() {
+  const textureLoader = new THREE.TextureLoader();
+
+  // Load textures asynchronously
+  const diffuseMapPromise = new Promise((resolve, reject) => {
+    textureLoader.load(
+      '../../textures/floor_bricks_02_4k.gltf/textures/floor_bricks_02_diff_4k.jpg',
+      resolve,
+      undefined,
+      reject
+    );
+  });
+
+  const normalMapPromise = new Promise((resolve, reject) => {
+    textureLoader.load(
+      '../../textures/floor_bricks_02_4k.gltf/textures/floor_bricks_02_nor_gl_4k.jpg',
+      resolve,
+      undefined,
+      reject
+    );
+  });
+
+  const roughnessMapPromise = new Promise((resolve, reject) => {
+    textureLoader.load(
+      '../../textures/floor_bricks_02_4k.gltf/textures/floor_bricks_02_rough_4k.jpg',
+      resolve,
+      undefined,
+      reject
+    );
+  });
+
+  return Promise.all([diffuseMapPromise, normalMapPromise, roughnessMapPromise])
+    .then(([diffuseMap, normalMap, roughnessMap]) => {
+      groundMaterial = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        map: diffuseMap,
+        normalMap: normalMap,
+        roughnessMap: roughnessMap,
+        roughness: 1,
+        flatShading: false
+      });
+
+      // wallMaterial = new THREE.MeshStandardMaterial({
+      //   map: diffuseMap,
+      //   normalMap: normalMap,
+      //   roughnessMap: roughnessMap,
+      //   roughness: 1, // fallback value
+      // });
+    }).catch ((err) => {
+      console.error("Error loading textures: ", err);
+    });
+}
+
 
 // Setup our scene
 function init() {
-
-  scene.background = new THREE.Color(0x000000);
+  scene.background = new THREE.Color(0xffffff);
 
   // Renderer
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.physicallyCorrectLights = true;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   document.body.appendChild(renderer.domElement);
 
   let brightness = 0.1;
@@ -53,11 +110,11 @@ function init() {
   }
 
   // Ambient Light
-  let ambient = new THREE.AmbientLight(0x000000, brightness);
-  scene.add(ambient);
+  // let ambient = new THREE.AmbientLight(0x000000, brightness);
+  // scene.add(ambient);
 
   // Create our gameMap
-  gameMap = new GameMap();
+  gameMap = new GameMap(groundMaterial, wallMaterial);
   scene.add(gameMap.gameObject);
 
   // Create roof
@@ -137,12 +194,8 @@ function init() {
   scene.add(cameraController.camera);
   scene.add(cameraController.controls.object);
 
-
-
-
   // First call to animate
-  animate();
-
+  animate(); 
 }
 
 
@@ -166,6 +219,6 @@ function animate() {
 }
 
 
-
-init();
-// 
+loadTextures().then(() => {
+  init();
+});
