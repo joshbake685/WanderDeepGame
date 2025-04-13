@@ -154,7 +154,6 @@ export class MapGraph {
     let current = end;
 
     if (!parents.has(end.id)) {
-      //console.log("There is no path to the node: " + end.id);
       return path;
     }
 

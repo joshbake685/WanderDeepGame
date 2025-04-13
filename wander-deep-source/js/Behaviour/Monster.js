@@ -370,7 +370,6 @@ export class WanderState extends State {
     }
 
     updateState(deltaTime, monster, player) {
-        console.log("Wandering");
         let playerIsMoving = player.move.forward || player.move.backward || player.move.left || player.move.right;
         if (player && monster.lineOfSight()) {
             // Switch our state to pursue state
@@ -378,13 +377,11 @@ export class WanderState extends State {
         } else if (player && monster.location.distanceTo(player.camera.position) <= monster.pursueRange && playerIsMoving && player.speed == player.runSpeed) {
             // Switch our state to pursue state
             if (!monster.growlCloseSound?.isPlaying) monster.growlCloseSound?.play();
-            console.log("Close growl sound played");
             monster.switchState(new PursueState(), player);
         } else {
             // Follow wander path found by JPS
             let currentNode = monster.gameMap.quantize(monster.location);
             if (monster.wanderPath.length() === 0 || currentNode === monster.gameMap.quantize(monster.wanderPath.get(monster.wanderPath.length() - 1))) {
-                // console.log("Node reached. Changing course!");
                 let groundNodesFilt = monster.gameMap.mapGraph.nodes.filter((node) => { return node.type === MapNode.Type.Ground });
                 let newTargetNodeIndex = MathUtil.getRandomInt(0, groundNodesFilt.length);
                 let newTargetNode = groundNodesFilt[newTargetNodeIndex];
@@ -403,11 +400,9 @@ export class WanderState extends State {
 export class PursueState extends State {
     enterState(monster, player) {
         monster.topSpeed = monster.pursueTopSpeed;
-        // console.log("Pursuing");
     }
 
     updateState(deltaTime, monster, player) {
-        console.log("Pursuing");
         if (monster.lineOfSight()) {
             // Switch our state to seek (chase) state
             monster.pursueTimer = monster.maxPursueTimer;
@@ -418,7 +413,6 @@ export class PursueState extends State {
             setTimeout(() => {
                 if (!monster.growlDistantSound?.isPlaying) monster.growlDistantSound?.play();
               }, 2000);
-            console.log("Distant growl sound played");
             monster.switchState(new WanderState(), player);
         } else {
             // Decrement timer
@@ -427,7 +421,6 @@ export class PursueState extends State {
             // Follow pursue path found by JPS
             let currentNode = monster.gameMap.quantize(monster.location);
             let points = monster.jps.find(currentNode, monster.gameMap.quantize(player.camera.position));
-            //console.log(player.camera.position);
             if (points.length > 1) {
                 let nextPoint = monster.gameMap.localize(points[1]);
                 monster.applyForce(monster.seek(nextPoint));
@@ -440,11 +433,9 @@ export class SeekState extends State {
     enterState(monster, player) {
         monster.topSpeed = monster.seekTopSpeed;
         if (!monster.roarSound?.isPlaying) monster.roarSound?.play();
-        console.log("Roar sound played");
     }
 
     updateState(deltaTime, monster, player) {
-        console.log("Seeking");
         if (!monster.lineOfSight()) {
             // Switch our state to pursue state
             monster.switchState(new PursueState(), player);

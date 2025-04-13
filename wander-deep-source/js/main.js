@@ -277,7 +277,6 @@ function init() {
 
 // Restarts game by refreshing tab
 function restartGame() {
-  console.log("Restart game clicked!");
   window.location.reload();
 }
 window.restartGame = restartGame;

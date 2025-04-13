@@ -84,7 +84,6 @@ export class FirstPersonController extends BaseCameraController {
         const audioLoader = new THREE.AudioLoader();
 
         audioLoader.load('../../audio/dark-dungeon-ambience.wav', (buffer) => {
-            console.log(this);
             this.dungeonAmbience.setBuffer(buffer);
             this.dungeonAmbience.setLoop(true);
             this.dungeonAmbience.setVolume(0.5);
