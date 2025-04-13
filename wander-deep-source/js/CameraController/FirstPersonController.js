@@ -67,6 +67,9 @@ export class FirstPersonController extends BaseCameraController {
         this.camera.add(this.spotLightTarget);
         this.spotLight.target = this.spotLightTarget;
 
+        // Game over (for monster to stop)
+        this.gameOver = false;
+
         this.document.addEventListener('keydown', (event) => {
             switch (event.code) {
                 case 'KeyW': this.move.forward = true; break;
@@ -93,6 +96,21 @@ export class FirstPersonController extends BaseCameraController {
             }
         });
 
+    }
+
+    showEndScreen(message, buttonText, isDeath = false) {
+        const overlay = document.getElementById('overlay');
+        const endMessage = document.getElementById('end-message');
+        const restartButton = document.getElementById('restart-button');
+        overlay.style.display = 'flex';
+        endMessage.textContent = message;
+        restartButton.textContent = buttonText;
+
+        // Set background color based on whether it's a death or win screen
+        overlay.style.backgroundColor = isDeath ? 'rgba(120, 0, 0, 0.9)' : 'rgba(0, 0, 0, 0.9)';
+
+        // Exit pointer lock
+        document.exitPointerLock?.();
     }
 
     setColliders(colliders) {

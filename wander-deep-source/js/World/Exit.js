@@ -96,7 +96,6 @@ export class Exit {
 
                 // Set rotation
                 this.lightModel.rotation.x = Math.PI / 2;
-                // this.model.rotation.z = Math.PI;
 
                 // Add to scene
                 this.scene.add(this.lightModel);
@@ -117,6 +116,12 @@ export class Exit {
                 if (this.playerController.hasKey) {
                     // End game!
                     this.padlockModel.visible = false;
+
+                    this.playerController.gameOver = true;
+                    this.playerController.controls.unlock();
+                    setTimeout(() => {
+                        this.playerController.showEndScreen("You escaped!", "Play again");
+                    }, 1500);
                 } else {
                     // Play lock sound, show message, etc.
                     console.log("Player needs key!");

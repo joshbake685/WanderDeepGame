@@ -270,7 +270,12 @@ function init() {
   animate();
 }
 
-
+// Restarts game by refreshing tab
+function restartGame() {
+  console.log("Restart game clicked!");
+  window.location.reload();
+}
+window.restartGame = restartGame;
 
 
 // animate loop

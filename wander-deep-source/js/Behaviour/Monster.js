@@ -16,16 +16,12 @@ export class Monster {
         this.size = 3;
 
         // Create a mixer for GLB model
-        this.mixer = null;  // To control animation
-        this.model.scale.set(5, 5, 5);  // Adjust scale if necessary
+        this.mixer = null;
+        this.model.scale.set(5, 5, 5);
 
-        // Set up the animation mixer for the model
+        // Set up and play the animation
         this.mixer = new THREE.AnimationMixer(this.model);
-
-        // Add the animations from the GLB model
-        this.model.animations.forEach((clip) => {
-            this.mixer.clipAction(clip).play();  // Play the animations (you can choose specific ones)
-        });
+        this.mixer.clipAction(this.model.animations[0]).play();
 
         this.scene.add(this.model);
 
@@ -36,6 +32,7 @@ export class Monster {
         this.pursueTopSpeed = 6;
         this.seekTopSpeed = 8;
         this.topSpeed = this.wanderTopSpeed;
+        this.stopped = false;
 
         this.mass = 0.1;
         this.maxForce = 25;
@@ -60,6 +57,21 @@ export class Monster {
 
     // To update our character
     update(deltaTime, gameMap) {
+
+        let playerNode = this.gameMap.quantize(this.playerController.camera.position);
+        let monsterNode = this.gameMap.quantize(this.location);
+        if (playerNode.i === monsterNode.i && playerNode.j === monsterNode.j) {
+            this.playerController.gameOver = true;
+            this.playerController.controls.unlock();
+            this.playerController.showEndScreen("You died!", "Try again", true);
+        }
+
+        // Stop moving + animating when game is over
+        if (this.playerController.gameOver && !this.stopped) {
+            this.stopped = true;
+            this.topSpeed = 0;
+            this.mixer.clipAction(this.model.animations[0]).fadeOut(3);
+        }
 
         this.state.updateState(deltaTime, this, this.playerController);
         this.mixer.update(deltaTime);
