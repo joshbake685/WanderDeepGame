@@ -288,11 +288,12 @@ export class Monster {
 export class WanderState extends State {
     enterState(monster, player) {
         monster.topSpeed = monster.wanderTopSpeed;
-        // console.log("Wandering");
+        monster.pathPoint = 0;
+        monster.wanderPath.points = [];
     }
 
     updateState(deltaTime, monster, player) {
-        // console.log("Wandering");
+        //console.log("Wandering");
         if (player && monster.lineOfSight()) {
             // Switch our state to pursue state
             monster.switchState(new SeekState(), player);
@@ -304,12 +305,9 @@ export class WanderState extends State {
             let currentNode = monster.gameMap.quantize(monster.location);
             if (monster.wanderPath.length() === 0 || currentNode === monster.gameMap.quantize(monster.wanderPath.get(monster.wanderPath.length() - 1))) {
                 // console.log("Node reached. Changing course!");
-                let newTargetNodeIndex = MathUtil.getRandomInt(0, monster.gameMap.mapGraph.nodes.length);
-                let newTargetNode = monster.gameMap.mapGraph.nodes[newTargetNodeIndex];
-                while (newTargetNode.type === MapNode.Type.Obstacle) {
-                    newTargetNodeIndex = MathUtil.getRandomInt(0, monster.gameMap.mapGraph.nodes.length);
-                    newTargetNode = monster.gameMap.mapGraph.nodes[newTargetNodeIndex];
-                }
+                let groundNodesFilt = monster.gameMap.mapGraph.nodes.filter((node) => { return node.type === MapNode.Type.Ground });
+                let newTargetNodeIndex = MathUtil.getRandomInt(0, groundNodesFilt.length);
+                let newTargetNode = groundNodesFilt[newTargetNodeIndex];
                 let points = monster.jps.find(currentNode, newTargetNode);
                 monster.pathPoint = 0;
                 monster.wanderPath.points = [];
