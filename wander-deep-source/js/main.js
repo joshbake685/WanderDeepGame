@@ -20,6 +20,9 @@ let dummyPlayer = null;
 let monster = null;
 let key = null;
 let exit = null;
+let groundMaterial = null;
+let wallMaterial = null;
+let ceilingMaterial = null;
 let colliders = [];
 
 
@@ -31,15 +34,129 @@ const clock = new THREE.Clock();
 let gameMap;
 
 
+// Load textures
+async function loadTextures() {
+  const textureLoader = new THREE.TextureLoader();
+
+  // Floor textures
+  const floorDiffuseMapPromise = new Promise((resolve, reject) => {
+    textureLoader.load(
+      '../../textures/floor_bricks_02_4k.gltf/textures/floor_bricks_02_diff_4k.jpg',
+      resolve,
+      undefined,
+      reject
+    );
+  });
+  const floorNormalMapPromise = new Promise((resolve, reject) => {
+    textureLoader.load(
+      '../../textures/floor_bricks_02_4k.gltf/textures/floor_bricks_02_nor_gl_4k.jpg',
+      resolve,
+      undefined,
+      reject
+    );
+  });
+  const floorRoughnessMapPromise = new Promise((resolve, reject) => {
+    textureLoader.load(
+      '../../textures/floor_bricks_02_4k.gltf/textures/floor_bricks_02_rough_4k.jpg',
+      resolve,
+      undefined,
+      reject
+    );
+  });
+
+  // Wall textures
+  const wallDiffuseMapPromise = new Promise((resolve, reject) => {
+    textureLoader.load(
+      '../../textures/castle_wall_varriation_4k.gltf/textures/castle_wall_varriation_diff_4k.jpg',
+      resolve,
+      undefined,
+      reject
+    );
+  });
+  const wallNormalMapPromise = new Promise((resolve, reject) => {
+    textureLoader.load(
+      '../../textures/castle_wall_varriation_4k.gltf/textures/castle_wall_varriation_nor_gl_4k.jpg',
+      resolve,
+      undefined,
+      reject
+    );
+  });
+  const wallRoughnessMapPromise = new Promise((resolve, reject) => {
+    textureLoader.load(
+      '../../textures/castle_wall_varriation_4k.gltf/textures/castle_wall_varriation_rough_4k.jpg',
+      resolve,
+      undefined,
+      reject
+    );
+  });
+
+  // Ceiling textures
+  const ceilingDiffuseMapPromise = new Promise((resolve, reject) => {
+    textureLoader.load(
+      '../../textures/cracked_concrete_wall_4k.gltf/textures/cracked_concrete_wall_diff_4k.jpg',
+      resolve,
+      undefined,
+      reject
+    );
+  });
+  const ceilingNormalMapPromise = new Promise((resolve, reject) => {
+    textureLoader.load(
+      '../../textures/cracked_concrete_wall_4k.gltf/textures/cracked_concrete_wall_nor_gl_4k.jpg',
+      resolve,
+      undefined,
+      reject
+    );
+  });
+  const ceilingRoughnessMapPromise = new Promise((resolve, reject) => {
+    textureLoader.load(
+      '../../textures/cracked_concrete_wall_4k.gltf/textures/cracked_concrete_wall_rough_4k.jpg',
+      resolve,
+      undefined,
+      reject
+    );
+  });
+
+  return Promise.all([floorDiffuseMapPromise, floorNormalMapPromise, floorRoughnessMapPromise, wallDiffuseMapPromise, wallNormalMapPromise, wallRoughnessMapPromise, ceilingDiffuseMapPromise, ceilingNormalMapPromise, ceilingRoughnessMapPromise])
+    .then(([floorDiffuseMap, floorNormalMap, floorRoughnessMap, wallDiffuseMap, wallNormalMap, wallRoughnessMap, ceilingDiffuseMap, ceilingNormalMap, ceilingRoughnessMap]) => {
+      groundMaterial = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        map: floorDiffuseMap,
+        normalMap: floorNormalMap,
+        roughnessMap: floorRoughnessMap,
+        roughness: 1,
+        flatShading: false
+      });
+
+      wallMaterial = new THREE.MeshStandardMaterial({
+        map: wallDiffuseMap,
+        normalMap: wallNormalMap,
+        roughnessMap: wallRoughnessMap,
+        roughness: 1,
+        flatShading: false
+      });
+
+      ceilingMaterial = new THREE.MeshStandardMaterial({
+        map: ceilingDiffuseMap,
+        normalMap: ceilingNormalMap,
+        roughnessMap: ceilingRoughnessMap,
+        roughness: 1,
+        flatShading: false
+      });
+    }).catch ((err) => {
+      console.error("Error loading textures: ", err);
+    });
+}
+
 
 // Setup our scene
 function init() {
-
-  scene.background = new THREE.Color(0x000000);
+  scene.background = new THREE.Color(0xffffff);
 
   // Renderer
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.physicallyCorrectLights = true;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   document.body.appendChild(renderer.domElement);
 
   let brightness = 0.1;
@@ -52,19 +169,15 @@ function init() {
     scene.add(directionalLight);
   }
 
-  // Ambient Light
-  let ambient = new THREE.AmbientLight(0x000000, brightness);
-  scene.add(ambient);
-
   // Create our gameMap
-  gameMap = new GameMap();
+  gameMap = new GameMap(groundMaterial, wallMaterial);
   scene.add(gameMap.gameObject);
 
   // Create roof
   if (ENABLE_ROOF) {
     const roofGeometry = new THREE.BoxGeometry(gameMap.bounds.max.x - gameMap.bounds.min.x, 1, gameMap.bounds.max.z - gameMap.bounds.min.z);
-    const roofMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
-    const roofMesh = new THREE.Mesh(roofGeometry, roofMaterial);
+    //const roofMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
+    const roofMesh = new THREE.Mesh(roofGeometry, ceilingMaterial);
     roofMesh.position.set(0, 5.5, 0);
     scene.add(roofMesh);
   }
@@ -137,12 +250,8 @@ function init() {
   scene.add(cameraController.camera);
   scene.add(cameraController.controls.object);
 
-
-
-
   // First call to animate
-  animate();
-
+  animate(); 
 }
 
 
@@ -166,6 +275,6 @@ function animate() {
 }
 
 
-
-init();
-// 
+loadTextures().then(() => {
+  init();
+});

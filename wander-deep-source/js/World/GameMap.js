@@ -7,7 +7,9 @@ import { DungeonGenerator } from './DungeonGenerator.js';
 export class GameMap {
 
   // Constructor for our GameMap class
-  constructor() {
+  constructor(groundMaterial, wallMaterial) {
+    this.groundMaterial = groundMaterial;
+    this.wallMaterial = wallMaterial;
 
     // Initialize bounds in here!
     // this.bounds = new THREE.Box3(
@@ -43,9 +45,9 @@ export class GameMap {
 
 
     // Create our map renderer
-    this.mapRenderer = new MapRenderer(this);
+    this.mapRenderer = new MapRenderer(this, this.groundMaterial, this.wallMaterial);
 
-    // Create our game object
+    // Create our game object (returns a promise)
     this.gameObject = this.mapRenderer.createRendering();
   }
 
