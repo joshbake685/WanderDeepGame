@@ -8,19 +8,26 @@ import { MapNode } from '../World/MapNode.js';
 
 export class Monster {
 
-    constructor(gameMap, playerController) {
+    constructor(gameMap, playerController, scene, monsterModel) {
         this.gameMap = gameMap;
         this.playerController = playerController;
+        this.scene = scene;
+        this.model = monsterModel;
         this.size = 3;
 
-        // Creating a cone game object for our Character
-        let coneGeo = new THREE.ConeGeometry(this.size / 2, this.size, 10);
-        let coneMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-        let mesh = new THREE.Mesh(coneGeo, coneMat);
-        mesh.rotation.x = Math.PI / 2;
+        // Create a mixer for GLB model
+        this.mixer = null;  // To control animation
+        this.model.scale.set(5, 5, 5);  // Adjust scale if necessary
 
-        this.gameObject = new THREE.Group();
-        this.gameObject.add(mesh);
+        // Set up the animation mixer for the model
+        this.mixer = new THREE.AnimationMixer(this.model);
+
+        // Add the animations from the GLB model
+        this.model.animations.forEach((clip) => {
+            this.mixer.clipAction(clip).play();  // Play the animations (you can choose specific ones)
+        });
+
+        this.scene.add(this.model);
 
         this.location = new THREE.Vector3(0, 0, 0);
         this.velocity = new THREE.Vector3(0, 0, 0);
@@ -51,16 +58,11 @@ export class Monster {
         this.state.enterState(this, player);
     }
 
-    // Set the colour of our character
-    setColor(color) {
-        this.gameObject.children[0].material = new THREE.MeshStandardMaterial({ color: color });
-    }
-
     // To update our character
     update(deltaTime, gameMap) {
-        // console.log(this.location.distanceTo(this.playerController.camera.position));
-        // console.log(this.pursueTimer);
+
         this.state.updateState(deltaTime, this, this.playerController);
+        this.mixer.update(deltaTime);
 
         // Update acceleration via velocity
         this.velocity.addScaledVector(this.acceleration, deltaTime);
@@ -71,16 +73,16 @@ export class Monster {
         // Point in the direction of movement
         if (this.velocity.length() > 0.1) {
             let angle = Math.atan2(this.velocity.x, this.velocity.z);
-            this.gameObject.rotation.y = angle;
+            this.model.rotation.y = angle;
         }
 
         // Update velocity via location
         this.location.addScaledVector(this.velocity, deltaTime);
 
-        //this.checkBounds(bounds);
         this.checkEdges(gameMap);
 
-        this.gameObject.position.copy(this.location);
+        this.model.position.copy(this.location);
+        this.model.position.setY(0);
         this.acceleration.setLength(0);
 
     }
@@ -150,7 +152,7 @@ export class Monster {
 
         // Monster's facing direction (forward = -Z in Three.js)
         this.forward = new THREE.Vector3(0, 0, 1);
-        this.forward.applyEuler(new THREE.Euler(0, this.gameObject.rotation.y, 0));
+        this.forward.applyEuler(new THREE.Euler(0, this.model.rotation.y, 0));
 
         const angle = toPlayer.angleTo(this.forward);
 
