@@ -125,7 +125,7 @@ export class Exit {
                         this.playerController.openingDoorSound?.play();
                     }
                     setTimeout(() => {
-                        this.playerController.showEndScreen("You escaped!", "Play again");
+                        this.playerController.showEndScreen("YOU ESCAPED", "Play again");
                     }, 3500);
                 } else {
                     // Play lock sound

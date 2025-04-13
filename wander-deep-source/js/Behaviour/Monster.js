@@ -45,6 +45,8 @@ export class Monster {
         this.pursueTimer = this.maxPursueTimer;
         this.fov = 5 * Math.PI / 12;
 
+        this.playedDeathSound = false;
+
         this.state = new WanderState();
         this.state.enterState(this, this.playerController);
     }
@@ -62,8 +64,12 @@ export class Monster {
         let monsterNode = this.gameMap.quantize(this.location);
         if (playerNode.i === monsterNode.i && playerNode.j === monsterNode.j) {
             this.playerController.gameOver = true;
+            if (!this.playedDeathSound) {
+                this.playedDeathSound = true;
+                this.playerController.deathSound?.play();
+            }
             this.playerController.controls.unlock();
-            this.playerController.showEndScreen("You died!", "Try again", true);
+            this.playerController.showEndScreen("YOU DIED", "Try again", true);
         }
 
         // Stop moving + animating when game is over
@@ -229,40 +235,40 @@ export class Monster {
     }
 
     // Arrive steering behaviour
-    arrive(target, radius) {
+    // arrive(target, radius) {
 
-        let desired = new THREE.Vector3();
-        desired.subVectors(target, this.location);
+    //     let desired = new THREE.Vector3();
+    //     desired.subVectors(target, this.location);
 
-        let distance = desired.length();
+    //     let distance = desired.length();
 
-        // If we are close enough to
-        // the target, stop
-        if (distance < 0.1) {
-            this.stop();
+    //     // If we are close enough to
+    //     // the target, stop
+    //     if (distance < 0.1) {
+    //         this.stop();
 
-            // Slow down if we are within
-            // a specified radius to the target
-        } else if (distance < radius) {
-            let speed = (distance / radius) * this.topSpeed;
-            desired.setLength(speed);
+    //         // Slow down if we are within
+    //         // a specified radius to the target
+    //     } else if (distance < radius) {
+    //         let speed = (distance / radius) * this.topSpeed;
+    //         desired.setLength(speed);
 
-            // Otherwise, proceed as seek
-        } else {
-            desired.setLength(this.topSpeed);
+    //         // Otherwise, proceed as seek
+    //     } else {
+    //         desired.setLength(this.topSpeed);
 
-        }
+    //     }
 
-        // Apply our steering formula
-        let steer = new THREE.Vector3();
-        steer.subVectors(desired, this.velocity);
+    //     // Apply our steering formula
+    //     let steer = new THREE.Vector3();
+    //     steer.subVectors(desired, this.velocity);
 
-        if (steer.length() > this.maxForce) {
-            steer.setLength(this.maxForce);
-        }
+    //     if (steer.length() > this.maxForce) {
+    //         steer.setLength(this.maxForce);
+    //     }
 
-        return steer;
-    }
+    //     return steer;
+    // }
 
     // Simple path follow
     simpleFollow(path) {

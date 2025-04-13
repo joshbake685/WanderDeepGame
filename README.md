@@ -15,6 +15,7 @@ Monster roar: https://pixabay.com/sound-effects/tiger-roar-loudly-193229/
 Get key: https://pixabay.com/sound-effects/key-get-39925/
 Open door: https://pixabay.com/sound-effects/metal-warehouse-door-opened-with-chains-100823/
 Locked door: https://pixabay.com/sound-effects/door-lock-82542/
+Death sound: https://pixabay.com/sound-effects/dramatic-synth-echo-43970/
 
 ## Models
 Monster model (animated with Mixamo): https://www.fab.com/listings/1833cf26-fa46-419e-b482-67859fe20bc6

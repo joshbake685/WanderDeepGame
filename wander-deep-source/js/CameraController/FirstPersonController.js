@@ -81,6 +81,7 @@ export class FirstPersonController extends BaseCameraController {
         this.getKeySound = new THREE.Audio(this.listener);
         this.doorLockedSound = new THREE.Audio(this.listener);
         this.openingDoorSound = new THREE.Audio(this.listener);
+        this.deathSound = new THREE.Audio(this.listener);
         const audioLoader = new THREE.AudioLoader();
 
         audioLoader.load('../../audio/dark-dungeon-ambience.wav', (buffer) => {
@@ -131,6 +132,13 @@ export class FirstPersonController extends BaseCameraController {
             this.openingDoorSound.setLoop(false);
             this.openingDoorSound.setVolume(1);
             this.openingDoorSound.stop();
+        });
+
+        audioLoader.load('../../audio/death-sound.mp3', (buffer) => {
+            this.deathSound.setBuffer(buffer);
+            this.deathSound.setLoop(false);
+            this.deathSound.setVolume(1);
+            this.deathSound.stop();
         });
 
         document.addEventListener('pointerdown', () => {
