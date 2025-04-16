@@ -83,56 +83,56 @@ export class FirstPersonController extends BaseCameraController {
         this.deathSound = new THREE.Audio(this.listener);
         const audioLoader = new THREE.AudioLoader();
 
-        audioLoader.load('../../audio/dark-dungeon-ambience.wav', (buffer) => {
+        audioLoader.load('./js/audio/dark-dungeon-ambience.wav', (buffer) => {
             this.dungeonAmbience.setBuffer(buffer);
             this.dungeonAmbience.setLoop(true);
             this.dungeonAmbience.setVolume(0.5);
             this.dungeonAmbience.play();
         });
 
-        audioLoader.load('../../audio/player-walk.mp3', (buffer) => {
+        audioLoader.load('./js/audio/player-walk.mp3', (buffer) => {
             this.playerWalkSound.setBuffer(buffer);
             this.playerWalkSound.setLoop(true);
             this.playerWalkSound.setVolume(1);
             this.playerWalkSound.stop();
         });
 
-        audioLoader.load('../../audio/player-run.mp3', (buffer) => {
+        audioLoader.load('./js/audio/player-run.mp3', (buffer) => {
             this.playerRunSound.setBuffer(buffer);
             this.playerRunSound.setLoop(true);
             this.playerRunSound.setVolume(1);
             this.playerRunSound.stop();
         });
 
-        audioLoader.load('../../audio/player-heavy-breathing.mp3', (buffer) => {
+        audioLoader.load('./js/audio/player-heavy-breathing.mp3', (buffer) => {
             this.playerBreathingSound.setBuffer(buffer);
             this.playerBreathingSound.setLoop(false);
             this.playerBreathingSound.setVolume(1);
             this.playerBreathingSound.stop();
         });
 
-        audioLoader.load('../../audio/key-get.mp3', (buffer) => {
+        audioLoader.load('./js/audio/key-get.mp3', (buffer) => {
             this.getKeySound.setBuffer(buffer);
             this.getKeySound.setLoop(false);
             this.getKeySound.setVolume(1);
             this.getKeySound.stop();
         });
 
-        audioLoader.load('../../audio/door-locked.mp3', (buffer) => {
+        audioLoader.load('./js/audio/door-locked.mp3', (buffer) => {
             this.doorLockedSound.setBuffer(buffer);
             this.doorLockedSound.setLoop(false);
             this.doorLockedSound.setVolume(1);
             this.doorLockedSound.stop();
         });
 
-        audioLoader.load('../../audio/opening-door.mp3', (buffer) => {
+        audioLoader.load('./js/audio/opening-door.mp3', (buffer) => {
             this.openingDoorSound.setBuffer(buffer);
             this.openingDoorSound.setLoop(false);
             this.openingDoorSound.setVolume(1);
             this.openingDoorSound.stop();
         });
 
-        audioLoader.load('../../audio/death-sound.mp3', (buffer) => {
+        audioLoader.load('./js/audio/death-sound.mp3', (buffer) => {
             this.deathSound.setBuffer(buffer);
             this.deathSound.setLoop(false);
             this.deathSound.setVolume(1);

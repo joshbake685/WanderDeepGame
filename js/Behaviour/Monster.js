@@ -53,7 +53,7 @@ export class Monster {
 
         const audioLoader = new THREE.AudioLoader();
 
-        audioLoader.load('../../audio/monster-walk.mp3', (buffer) => {
+        audioLoader.load('./js/audio/monster-walk.mp3', (buffer) => {
             this.walkSound.setBuffer(buffer);
             this.walkSound.setRefDistance(1);
             this.walkSound.setLoop(true);
@@ -66,7 +66,7 @@ export class Monster {
             this.walkSound.play();
         });
 
-        audioLoader.load('../../audio/monster-growl-close.mp3', (buffer) => {
+        audioLoader.load('./js/audio/monster-growl-close.mp3', (buffer) => {
             this.growlCloseSound.setBuffer(buffer);
             this.growlCloseSound.setRefDistance(this.pursueRange / 2);
             this.growlCloseSound.setLoop(false);
@@ -78,7 +78,7 @@ export class Monster {
             this.growlCloseSound.stop();
         });
 
-        audioLoader.load('../../audio/monster-growl-distant.mp3', (buffer) => {
+        audioLoader.load('./js/audio/monster-growl-distant.mp3', (buffer) => {
             this.growlDistantSound.setBuffer(buffer);
             this.growlDistantSound.setRefDistance(this.pursueRange / 2);
             this.growlDistantSound.setLoop(false);
@@ -90,7 +90,7 @@ export class Monster {
             this.growlDistantSound.stop();
         });
 
-        audioLoader.load('../../audio/monster-roar.mp3', (buffer) => {
+        audioLoader.load('./js/audio/monster-roar.mp3', (buffer) => {
             this.roarSound.setBuffer(buffer);
             this.roarSound.setRefDistance(this.pursueRange / 2);
             this.roarSound.setLoop(false);
@@ -412,7 +412,7 @@ export class PursueState extends State {
             monster.pursueTimer = monster.maxPursueTimer;
             setTimeout(() => {
                 if (!monster.growlDistantSound?.isPlaying) monster.growlDistantSound?.play();
-              }, 2000);
+            }, 2000);
             monster.switchState(new WanderState(), player);
         } else {
             // Decrement timer
