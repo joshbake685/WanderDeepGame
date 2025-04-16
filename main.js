@@ -1,12 +1,12 @@
 import * as THREE from 'three';
-import { GameMap } from './World/GameMap.js';
-import { FirstPersonController } from './CameraController/FirstPersonController.js';
-import { OrbitCameraController } from './CameraController/OrbitCameraController.js';
-import { DebugBlock } from '../DebugBlock.js';
-import { Monster } from './Behaviour/Monster.js';
-import { DummyPlayer } from './Behaviour/DummyPlayer.js';
-import { Key } from './World/Key.js';
-import { Exit } from './World/Exit.js';
+import { GameMap } from './js/World/GameMap.js';
+import { FirstPersonController } from './js/CameraController/FirstPersonController.js';
+import { OrbitCameraController } from './js/CameraController/OrbitCameraController.js';
+import { DebugBlock } from './DebugBlock.js';
+import { Monster } from './js/Behaviour/Monster.js';
+import { DummyPlayer } from './js/Behaviour/DummyPlayer.js';
+import { Key } from './js/World/Key.js';
+import { Exit } from './js/World/Exit.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 const USE_CAMERA_ORBIT = false; // For debugging
@@ -40,7 +40,6 @@ const clock = new THREE.Clock();
 // Declare our GameMap
 let gameMap;
 
-
 // Returns promise that resolves once all textures are loaded
 async function loadTextures() {
   const textureLoader = new THREE.TextureLoader();
@@ -48,7 +47,7 @@ async function loadTextures() {
   // Floor textures
   const floorDiffuseMapPromise = new Promise((resolve, reject) => {
     textureLoader.load(
-      '../../textures/floor_bricks_02_4k.gltf/textures/floor_bricks_02_diff_4k.jpg',
+      './js/textures/floor_bricks_02_4k.gltf/textures/floor_bricks_02_diff_4k.jpg',
       resolve,
       undefined,
       reject
@@ -56,7 +55,7 @@ async function loadTextures() {
   });
   const floorNormalMapPromise = new Promise((resolve, reject) => {
     textureLoader.load(
-      '../../textures/floor_bricks_02_4k.gltf/textures/floor_bricks_02_nor_gl_4k.jpg',
+      './js/textures/floor_bricks_02_4k.gltf/textures/floor_bricks_02_nor_gl_4k.jpg',
       resolve,
       undefined,
       reject
@@ -64,7 +63,7 @@ async function loadTextures() {
   });
   const floorRoughnessMapPromise = new Promise((resolve, reject) => {
     textureLoader.load(
-      '../../textures/floor_bricks_02_4k.gltf/textures/floor_bricks_02_rough_4k.jpg',
+      './js/textures/floor_bricks_02_4k.gltf/textures/floor_bricks_02_rough_4k.jpg',
       resolve,
       undefined,
       reject
@@ -74,7 +73,7 @@ async function loadTextures() {
   // Wall textures
   const wallDiffuseMapPromise = new Promise((resolve, reject) => {
     textureLoader.load(
-      '../../textures/castle_wall_varriation_4k.gltf/textures/castle_wall_varriation_diff_4k.jpg',
+      './js/textures/castle_wall_varriation_4k.gltf/textures/castle_wall_varriation_diff_4k.jpg',
       resolve,
       undefined,
       reject
@@ -82,7 +81,7 @@ async function loadTextures() {
   });
   const wallNormalMapPromise = new Promise((resolve, reject) => {
     textureLoader.load(
-      '../../textures/castle_wall_varriation_4k.gltf/textures/castle_wall_varriation_nor_gl_4k.jpg',
+      './js/textures/castle_wall_varriation_4k.gltf/textures/castle_wall_varriation_nor_gl_4k.jpg',
       resolve,
       undefined,
       reject
@@ -90,7 +89,7 @@ async function loadTextures() {
   });
   const wallRoughnessMapPromise = new Promise((resolve, reject) => {
     textureLoader.load(
-      '../../textures/castle_wall_varriation_4k.gltf/textures/castle_wall_varriation_rough_4k.jpg',
+      './js/textures/castle_wall_varriation_4k.gltf/textures/castle_wall_varriation_rough_4k.jpg',
       resolve,
       undefined,
       reject
@@ -100,7 +99,7 @@ async function loadTextures() {
   // Ceiling textures
   const ceilingDiffuseMapPromise = new Promise((resolve, reject) => {
     textureLoader.load(
-      '../../textures/cracked_concrete_wall_4k.gltf/textures/cracked_concrete_wall_diff_4k.jpg',
+      './js/textures/cracked_concrete_wall_4k.gltf/textures/cracked_concrete_wall_diff_4k.jpg',
       resolve,
       undefined,
       reject
@@ -108,7 +107,7 @@ async function loadTextures() {
   });
   const ceilingNormalMapPromise = new Promise((resolve, reject) => {
     textureLoader.load(
-      '../../textures/cracked_concrete_wall_4k.gltf/textures/cracked_concrete_wall_nor_gl_4k.jpg',
+      './js/textures/cracked_concrete_wall_4k.gltf/textures/cracked_concrete_wall_nor_gl_4k.jpg',
       resolve,
       undefined,
       reject
@@ -116,7 +115,7 @@ async function loadTextures() {
   });
   const ceilingRoughnessMapPromise = new Promise((resolve, reject) => {
     textureLoader.load(
-      '../../textures/cracked_concrete_wall_4k.gltf/textures/cracked_concrete_wall_rough_4k.jpg',
+      './js/textures/cracked_concrete_wall_4k.gltf/textures/cracked_concrete_wall_rough_4k.jpg',
       resolve,
       undefined,
       reject
@@ -159,7 +158,7 @@ async function loadModels() {
   const loader = new GLTFLoader();
 
   return new Promise((resolve, reject) => {
-    loader.load('../../models/monster_walking.glb', (gltf) => {
+    loader.load('./js/models/monster_walking.glb', (gltf) => {
       const monsterModel = gltf.scene;
       const animations = gltf.animations;
       monsterModel.animations = animations;

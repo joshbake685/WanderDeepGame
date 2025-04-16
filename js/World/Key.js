@@ -13,7 +13,7 @@ export class Key {
         // Create key mesh
         const loader = new GLTFLoader();
         loader.load(
-            '../../models/old_rusty_key.glb',
+            './js/models/old_rusty_key.glb',
             (gltf) => {
                 this.model = gltf.scene;
 

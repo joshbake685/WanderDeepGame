@@ -37,7 +37,7 @@ export class Exit {
 
         // Load the door
         loader.load(
-            '../../models/rusty_door.glb',
+            './js/models/rusty_door.glb',
             (gltf) => {
                 this.doorModel = gltf.scene;
 
@@ -61,7 +61,7 @@ export class Exit {
 
         // Load the padlock
         loader.load(
-            '../../models/rusty_steel_door_lock.glb',
+            './js/models/rusty_steel_door_lock.glb',
             (gltf) => {
                 this.padlockModel = gltf.scene;
 
@@ -86,7 +86,7 @@ export class Exit {
 
         // Load the overhead light
         loader.load(
-            '../../models/industrial_wall_light.glb',
+            './js/models/industrial_wall_light.glb',
             (gltf) => {
                 this.lightModel = gltf.scene;
 
