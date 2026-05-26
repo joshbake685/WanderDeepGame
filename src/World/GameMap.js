@@ -13,8 +13,8 @@ export class GameMap {
 
     // Initialize bounds in here!
     this.bounds = new THREE.Box3(
-      new THREE.Vector3(-100, 0, -100), // scene min
-      new THREE.Vector3(100, 0, 100) // scene max
+      new THREE.Vector3(-75, 0, -75), // scene min
+      new THREE.Vector3(75, 0, 75) // scene max
     );
 
     // worldSize is a Vector3 with 
